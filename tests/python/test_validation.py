@@ -1,6 +1,5 @@
 """Synthetic schema/quality cases. No fixture is a real sensor recording."""
 import copy
-import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -113,6 +112,29 @@ class ValidationTests(unittest.TestCase):
             path.write_text('{"metadata":', encoding="utf-8")
             self.assertFalse(validate_file(path).valid)
         self.assertFalse(validate_recording({"metadata": [], "samples": "bad"}).valid)
+
+    def test_invalid_shapes_and_extreme_numbers_fail_without_crashing(self):
+        for mutation in [lambda d: d["metadata"].update(mode=[]),
+                         lambda d: d["metadata"].update(labelReviewStatus={}),
+                         lambda d: d["samples"][0].update(timestamp=10 ** 400),
+                         lambda d: d["samples"][0]["attitude"].update(x=1e308)]:
+            data = synthetic_recording()
+            mutation(data)
+            self.assertFalse(validate_recording(data).valid)
+
+    def test_reviewed_export_retains_original_id_and_matches_latest_labels(self):
+        data = synthetic_recording()
+        data["originalMetadata"] = copy.deepcopy(data["metadata"])
+        data["originalAnnotations"] = copy.deepcopy(data["annotations"])
+        data["correctionHistory"] = [{"id": "44444444-4444-4444-8444-444444444444",
+            "reviewedAt": "2026-11-07T22:00:00Z", "exerciseID": "machine_chest_press",
+            "actualReps": 3, "weightKG": 45.0}]
+        data["metadata"].update(actualReps=3, weightKG=45.0, labelReviewStatus="corrected")
+        data["annotations"][0].update(actualReps=3, weightKG=45.0)
+        self.assertTrue(validate_recording(data).valid)
+        self.assertEqual(data["originalMetadata"]["actualReps"], 2)
+        data["metadata"]["actualReps"] = 7
+        self.assertFalse(validate_recording(data).valid)
 
     def test_complete_set_requires_actual_ground_truth(self):
         data = synthetic_recording()

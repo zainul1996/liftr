@@ -44,7 +44,11 @@ def validate_recording(document: Any) -> ValidationReport:
                integer: bool = False, optional: bool = False) -> bool:
         if optional and value is None:
             return True
-        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        try:
+            finite = not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
+        except OverflowError:
+            finite = False
+        if not finite:
             error(path, "must be a finite number")
             return False
         if integer and not isinstance(value, int):
@@ -107,7 +111,7 @@ def validate_recording(document: Any) -> ValidationReport:
         "labelReviewStatus": {"unreviewed", "reviewed", "corrected"},
         "mode": {"set", "continuous"}, "status": {"complete", "interrupted"},
     }.items():
-        if metadata.get(key) not in allowed:
+        if not isinstance(metadata.get(key), str) or metadata[key] not in allowed:
             error(f"metadata.{key}", f"must be one of {', '.join(sorted(allowed))}")
     exercise(metadata.get("exerciseID"), "metadata.exerciseID", optional=metadata.get("mode") == "continuous" or metadata.get("status") == "interrupted")
     if metadata.get("equipment") is not None:
@@ -161,7 +165,7 @@ def validate_recording(document: Any) -> ValidationReport:
             axes = ("x", "y", "z", "w") if channel == "attitude" else ("x", "y", "z")
             valid = [number(vector.get(axis), f"{path}.{channel}.{axis}") for axis in axes]
             if channel == "attitude" and all(valid):
-                norm = math.sqrt(sum(vector[axis] ** 2 for axis in axes))
+                norm = math.hypot(*(vector[axis] for axis in axes))
                 if not 0.85 <= norm <= 1.15:
                     error(path + ".attitude", "quaternion must have approximately unit length")
     if len(timestamps) >= 2 and all(b > a for a, b in zip(timestamps, timestamps[1:])):
@@ -217,6 +221,36 @@ def validate_recording(document: Any) -> ValidationReport:
                             if boundary < start or boundary > end or previous is not None and boundary <= previous:
                                 error(path + ".repBoundaries", "must increase within set boundaries")
                             previous = boundary
+    # Reviewed exports overlay current labels, preserving the received originals.
+    history = document.get("correctionHistory")
+    if history is not None:
+        original = document.get("originalMetadata")
+        if not isinstance(original, dict) or original.get("id") != metadata.get("id"):
+            error("originalMetadata", "must preserve the same recording UUID")
+        if not isinstance(document.get("originalAnnotations"), list):
+            error("originalAnnotations", "must preserve the original annotation array")
+        if not isinstance(history, list) or not history:
+            error("correctionHistory", "must contain at least one review")
+        else:
+            previous_review: datetime | None = None
+            for index, review in enumerate(history):
+                path = f"correctionHistory[{index}]"
+                if not isinstance(review, dict):
+                    error(path, "must be an object")
+                    continue
+                uuid(review.get("id"), path + ".id")
+                reviewed_at = date(review.get("reviewedAt"), path + ".reviewedAt")
+                if reviewed_at and previous_review and reviewed_at < previous_review:
+                    report.warnings.append("Review wall-clock timestamps are out of order; inspect device clock changes.")
+                previous_review = reviewed_at
+                exercise(review.get("exerciseID"), path + ".exerciseID")
+                number(review.get("actualReps"), path + ".actualReps", minimum=0, integer=True, optional=True)
+                number(review.get("weightKG"), path + ".weightKG", minimum=0, optional=True)
+            latest = history[-1]
+            if isinstance(latest, dict):
+                for key in ("exerciseID", "actualReps", "weightKG"):
+                    if metadata.get(key) != latest.get(key):
+                        error("metadata." + key, "does not match latest correction")
     return report
 
 
