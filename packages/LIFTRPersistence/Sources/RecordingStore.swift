@@ -48,6 +48,15 @@ public actor RecordingStore {
     try writeSummary(resolved)
     return destination
   }
+  /// Restores a file atomically finalized by the Watch writer before a process interruption.
+  /// Metadata extraction stays bounded even when raw samples contain a full workout.
+  public func recoverFinalizedDraft(at source: URL) throws -> (
+    fileURL: URL, metadata: RecordingMetadata
+  ) {
+    let metadata = try RecordingMetadataReader.read(from: source)
+    let fileURL = try importFile(at: source, metadata: metadata)
+    return (fileURL, metadata)
+  }
   public func list() throws -> [RecordingMetadata] {
     let urls = try FileManager.default.contentsOfDirectory(
       at: directory, includingPropertiesForKeys: nil)

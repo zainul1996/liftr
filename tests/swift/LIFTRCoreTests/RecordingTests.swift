@@ -196,4 +196,24 @@ final class RecordingTests: XCTestCase {
     XCTAssertFalse(FileManager.default.fileExists(atPath: deletedURL.path))
     XCTAssertTrue(FileManager.default.fileExists(atPath: keptURL.path))
   }
+
+  func testFinalizedDraftWithoutSidecarRecoversAfterCrashBeforeImport() async throws {
+    let base = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: base) }
+    let drafts = base.appendingPathComponent("Drafts")
+    try FileManager.default.createDirectory(at: drafts, withIntermediateDirectories: true)
+    let store = try RecordingStore(directory: base.appendingPathComponent("Recordings"))
+    var recording = fixture()
+    recording.metadata.actualReps = 12
+    let orphan = drafts.appendingPathComponent(recording.id.uuidString + ".liftr.json")
+    try RecordingJSON.encoder().encode(recording).write(to: orphan)
+    let recovered = try await store.recoverFinalizedDraft(at: orphan)
+    _ = try await store.recoverFinalizedDraft(at: orphan)
+    let saved = try await store.list()
+    let loaded = try await store.load(id: recording.id)
+    XCTAssertEqual(saved.count, 1)
+    XCTAssertEqual(recovered.metadata.actualReps, 12)
+    XCTAssertEqual(loaded.metadata, recording.metadata)
+    XCTAssertTrue(FileManager.default.fileExists(atPath: recovered.fileURL.path))
+  }
 }

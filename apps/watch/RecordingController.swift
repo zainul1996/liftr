@@ -289,6 +289,14 @@ final class RecordingController: ObservableObject {
         at: draftDirectory, includingPropertiesForKeys: nil)) ?? []
     var recoveredCount = 0
     var failures = 0
+    for completed in files where completed.lastPathComponent.hasSuffix(".liftr.json") {
+      do {
+        let recovered = try await store.recoverFinalizedDraft(at: completed)
+        transfer.enqueue(fileURL: recovered.fileURL, recordingID: recovered.metadata.id)
+        if completed != recovered.fileURL { try FileManager.default.removeItem(at: completed) }
+        recoveredCount += 1
+      } catch { failures += 1 }
+    }
     for metadataURL in files where metadataURL.lastPathComponent.hasSuffix(".draft.json") {
       let output = draftDirectory.appendingPathComponent(
         "Recovery-" + UUID().uuidString, isDirectory: true)
@@ -314,7 +322,7 @@ final class RecordingController: ObservableObject {
     restStartedAt = restStartedAt ?? Date()
     await refreshRecordings()
     errorMessage =
-      "Recovered \(recoveredCount) recording(s) as interrupted with unknown reps. \(failures > 0 ? "\(failures) draft(s) could not be recovered and remain on Watch." : "Review labels on iPhone.")"
+      "Recovered \(recoveredCount) saved or interrupted recording(s). \(failures > 0 ? "\(failures) draft(s) could not be recovered and remain on Watch." : "Review labels on iPhone.")"
   }
 
   func refreshRecordings() async {
@@ -324,7 +332,10 @@ final class RecordingController: ObservableObject {
     let files =
       (try? FileManager.default.contentsOfDirectory(
         at: draftDirectory, includingPropertiesForKeys: nil)) ?? []
-    pendingDraftCount = files.filter { $0.pathExtension == "partial" }.count
+    pendingDraftCount =
+      files.filter {
+        $0.pathExtension == "partial" || $0.lastPathComponent.hasSuffix(".liftr.json")
+      }.count
   }
 
   private func interrupt(_ message: String) {
