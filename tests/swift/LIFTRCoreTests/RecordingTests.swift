@@ -204,6 +204,7 @@ final class RecordingTests: XCTestCase {
     try FileManager.default.createDirectory(at: drafts, withIntermediateDirectories: true)
     let store = try RecordingStore(directory: base.appendingPathComponent("Recordings"))
     var recording = fixture()
+    recording.metadata.startedAt = Date(timeIntervalSince1970: 1_800_000_000)
     recording.metadata.actualReps = 12
     let orphan = drafts.appendingPathComponent(recording.id.uuidString + ".liftr.json")
     try RecordingJSON.encoder().encode(recording).write(to: orphan)
