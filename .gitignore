@@ -1,0 +1,23 @@
+# Local recordings, datasets and health exports
+recordings/
+*.liftr.json
+*.partial
+*.draft.json
+ml/datasets/raw/
+ml/datasets/private/
+exports/
+# Builds and tools
+.build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+# Signing and secrets
+*.p12
+*.mobileprovision
+*.provisionprofile
+.env
+.env.*
