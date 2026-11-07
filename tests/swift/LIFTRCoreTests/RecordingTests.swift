@@ -90,7 +90,8 @@ final class RecordingTests: XCTestCase {
       do {
         _ = try await store.save(recording)
         XCTFail("Invalid recording was saved")
-      } catch { /* expected */  }
+      } catch {  // Expected validation failure.
+      }
     }
     let saved = try await store.list()
     XCTAssertTrue(saved.isEmpty)
@@ -109,7 +110,8 @@ final class RecordingTests: XCTestCase {
     do {
       _ = try await store.importFile(at: incoming, expectedID: UUID())
       XCTFail("Mismatched transfer must be rejected")
-    } catch RecordingStore.StoreError.identityMismatch { /* expected before mutation */  }
+    } catch RecordingStore.StoreError.identityMismatch {  // Expected before mutation.
+    }
     let entries = try FileManager.default.contentsOfDirectory(atPath: directory.path)
     XCTAssertTrue(entries.isEmpty)
   }
@@ -173,7 +175,8 @@ final class RecordingTests: XCTestCase {
     do {
       _ = try await store.importFile(at: incoming, expectedID: metadata.id)
       XCTFail("Malformed raw JSON imported")
-    } catch { /* no canonical copy can be acknowledged */  }
+    } catch {  // No canonical copy can be acknowledged.
+    }
     XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
   }
 }
