@@ -20,8 +20,9 @@ public actor RecordingStore {
     }
     /// Stream writer callers provide metadata to avoid loading raw samples on Watch.
     /// Duplicate transfers keep the existing canonical recording and its summary.
-    public func importFile(at source: URL, metadata: RecordingMetadata? = nil) throws -> URL {
-        let resolved = try metadata ?? RecordingJSON.decoder().decode(Recording.self, from: Data(contentsOf: source)).metadata
+    public func importFile(at source: URL, metadata: RecordingMetadata? = nil, expectedID: UUID? = nil) throws -> URL {
+        let resolved = try metadata ?? RecordingMetadataReader.read(from: source)
+        if let expectedID, resolved.id != expectedID { throw StoreError.identityMismatch }
         try validate(metadata: resolved)
         let destination = fileURL(id: resolved.id)
         if source.standardizedFileURL == destination.standardizedFileURL {
@@ -30,7 +31,7 @@ public actor RecordingStore {
         }
         if FileManager.default.fileExists(atPath: destination.path) {
             if !FileManager.default.fileExists(atPath: summaryURL(id: resolved.id).path) {
-                try writeSummary(load(id: resolved.id).metadata)
+                try writeSummary(RecordingMetadataReader.read(from: destination))
             }
             return destination
         }
@@ -47,7 +48,9 @@ public actor RecordingStore {
         for url in urls where url.lastPathComponent.hasSuffix(".liftr.json") {
             let idText = url.lastPathComponent.replacingOccurrences(of: ".liftr.json", with: "")
             if let id = UUID(uuidString: idText), !FileManager.default.fileExists(atPath: summaryURL(id: id).path) {
-                try writeSummary(load(id: id).metadata)
+                let metadata = try RecordingMetadataReader.read(from: url)
+                guard metadata.id == id else { throw StoreError.identityMismatch }
+                try writeSummary(metadata)
             }
         }
         return try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)

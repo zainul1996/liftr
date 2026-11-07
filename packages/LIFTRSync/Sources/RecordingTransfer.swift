@@ -62,9 +62,10 @@ public final class RecordingTransfer: NSObject, ObservableObject, WCSessionDeleg
         Task { @MainActor in
             defer { try? FileManager.default.removeItem(at: temporary) }
             do {
-                let imported = try await store.importFile(at: temporary)
+                let expectedID = declaredID.flatMap(UUID.init(uuidString:))
+                guard declaredID == nil || expectedID != nil else { throw RecordingStore.StoreError.identityMismatch }
+                let imported = try await store.importFile(at: temporary, expectedID: expectedID)
                 let id = imported.deletingPathExtension().deletingPathExtension().lastPathComponent
-                guard declaredID == nil || declaredID == id else { throw RecordingStore.StoreError.identityMismatch }
                 WCSession.default.transferUserInfo(["kind": "recordingAcknowledged", "recordingID": id])
                 receivedCount += 1
                 status = "Recording received"
