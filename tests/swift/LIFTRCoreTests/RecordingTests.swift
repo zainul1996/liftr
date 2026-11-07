@@ -23,4 +23,62 @@ final class RecordingTests: XCTestCase {
         let remaining = try await store.list()
         XCTAssertTrue(remaining.isEmpty)
     }
+
+    private func fixture() -> Recording {
+        Recording(metadata: .init(participantID: "synthetic-only", sessionID: UUID(),
+            watchWrist: "left", watchModel: "synthetic", watchOSVersion: "synthetic"), samples: [])
+    }
+    func testAcknowledgedRecordingsStayOutOfRetryQueueAfterReopen() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try RecordingStore(directory: directory)
+        let recording = fixture()
+        _ = try await store.save(recording)
+        let before = try await store.pendingTransfers()
+        XCTAssertEqual(before.count, 1)
+        try await store.acknowledgeTransfer(id: recording.id)
+        let reopened = try RecordingStore(directory: directory)
+        let after = try await reopened.pendingTransfers()
+        XCTAssertTrue(after.isEmpty)
+    }
+    func testDuplicateImportKeepsCanonicalRecordingAndSummary() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let incoming = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory); try? FileManager.default.removeItem(at: incoming) }
+        let store = try RecordingStore(directory: directory)
+        let recording = fixture()
+        _ = try await store.save(recording)
+        var duplicate = recording
+        duplicate.metadata.participantID = "changed-duplicate"
+        try RecordingJSON.encoder().encode(duplicate).write(to: incoming)
+        _ = try await store.importFile(at: incoming)
+        let loaded = try await store.load(id: recording.id)
+        let listed = try await store.list()
+        XCTAssertEqual(loaded.metadata.participantID, "synthetic-only")
+        XCTAssertEqual(listed.first?.participantID, "synthetic-only")
+    }
+    func testListRecoversMissingSummaryAfterInterruptedWrite() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try RecordingStore(directory: directory)
+        let recording = fixture()
+        let raw = await store.fileURL(id: recording.id)
+        try RecordingJSON.encoder().encode(recording).write(to: raw)
+        let recovered = try await store.list()
+        XCTAssertEqual(recovered.map(\.id), [recording.id])
+    }
+    func testFutureSchemaAndNegativeLabelsAreRejected() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try RecordingStore(directory: directory)
+        for change in [0, 1] {
+            var recording = fixture()
+            if change == 0 { recording.metadata.schemaVersion = 2 }
+            else { recording.metadata.actualReps = -1 }
+            do { _ = try await store.save(recording); XCTFail("Invalid recording was saved") }
+            catch { /* expected */ }
+        }
+        let saved = try await store.list()
+        XCTAssertTrue(saved.isEmpty)
+    }
 }
