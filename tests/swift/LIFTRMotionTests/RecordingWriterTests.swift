@@ -81,4 +81,20 @@ final class RecordingWriterTests: XCTestCase {
         XCTAssertEqual(decoded.annotations.first?.endTimestamp, 20.02)
         XCTAssertTrue(FileManager.default.fileExists(atPath: writer.partialURL.path))
     }
+
+    func testFailedFinalRenameCanRetryWithoutDuplicatingJSONSuffix() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let metadata = metadata()
+        let writer = try StreamingRecordingWriter(directory: directory, metadata: metadata)
+        try writer.append(sample(1))
+        try writer.append(sample(1.02))
+        try FileManager.default.createDirectory(at: writer.finalURL, withIntermediateDirectories: false)
+        XCTAssertThrowsError(try writer.finish(metadata: metadata, annotations: []))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: writer.partialURL.path))
+        try FileManager.default.removeItem(at: writer.finalURL)
+        let final = try writer.finish(metadata: metadata, annotations: [])
+        let decoded = try RecordingJSON.decoder().decode(Recording.self, from: Data(contentsOf: final))
+        XCTAssertEqual(decoded.samples.map(\.timestamp), [1, 1.02])
+    }
 }
