@@ -26,6 +26,14 @@ The leg-extension and seated-leg-curl names are provisional. Keep a note of the 
 
 If a recording fails or is interrupted, do not assume it was saved or transferred. Read the Watch status, retry if offered, and inspect the iPhone recording before including it in a dataset. A partial recovery file is not a successfully labelled set.
 
+## Optional continuous capture
+
+Before starting a workout, enable **Record rest too**. **Start Workout** begins continuous capture and shows the rest screen. Use **Start Set** and **End Set** to mark each exercise interval, then enter reps and weight and save its label. Raw capture continues during rest, machine changes and label entry. The selected exercise remains available for the next set.
+
+Use **End Workout** to stop capture and save one session recording with set annotations. On iPhone, its detail screen lists labelled sets and previews motion across the session. Intervals outside the set annotations remain unlabelled context. If you do not know a set's label, leave that interval unlabelled rather than guessing.
+
+Continuous capture has source implementation, but long-session battery, interruption recovery and actual sample rates still need physical Watch testing. Begin with a short trial and keep individual-set mode available. The first phone editor corrects individual-set recordings; editing separate annotations within a continuous session remains a later step. Machine-variant detail is currently strongest in individual-set mode.
+
 ## Review and export on iPhone
 
 1. Open **Recordings**. Delivery may take time because WatchConnectivity schedules background files.
@@ -43,6 +51,6 @@ Deleting a recording from the phone removes that phone copy and its phone review
 
 Aim for 20 to 30 sets per supplied upper-body variation across several gym sessions, weights and tempos. Collect 15 sets each for seated leg extension and seated leg curl for the low-motion experiment. Do not rush extra repetitions just to hit a dataset target.
 
-Rest, walking, machine adjustments, drinking water, carrying equipment, and holding handles without lifting are useful negative examples. Optional continuous-session recording and set-boundary marking must be implemented and physically verified before relying on them for these negatives. The first recording slice may support individual sets only. Do not mark an ordinary negative motion as one of the exercise labels.
+Rest, walking, machine adjustments, drinking water, carrying equipment, and holding handles without lifting are useful negative examples. Continuous-session recording and set-boundary marking need physical verification before relying on them for these negatives. Do not mark an ordinary negative motion as one of the exercise labels.
 
 Keep session IDs intact. Later training must hold out whole recording sessions rather than splitting overlapping windows from the same session between training and testing.
