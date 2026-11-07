@@ -42,7 +42,19 @@ final class PhoneLibrary: ObservableObject {
             let reviewsURL = directory.deletingLastPathComponent().appendingPathComponent("reviews.json")
             self.reviewsURL = reviewsURL
             if FileManager.default.fileExists(atPath: reviewsURL.path) {
-                reviews = try RecordingJSON.decoder().decode([String: [RecordingReview]].self, from: Data(contentsOf: reviewsURL))
+                do {
+                    reviews = try RecordingJSON.decoder().decode([String: [RecordingReview]].self, from: Data(contentsOf: reviewsURL))
+                } catch {
+                    // A damaged optional review file must never disable incoming recordings.
+                    let recovery = reviewsURL.deletingLastPathComponent().appendingPathComponent("reviews-recovery-\(UUID().uuidString).json")
+                    do {
+                        try FileManager.default.copyItem(at: reviewsURL, to: recovery)
+                        errorMessage = "Review history could not be read. A recovery copy was preserved. Recording transfers remain available."
+                    } catch {
+                        self.reviewsURL = nil
+                        errorMessage = "Review history could not be read or backed up. Review edits are disabled to preserve it. Recording transfers remain available."
+                    }
+                }
             }
             let transfer = RecordingTransfer(store: store)
             self.transfer = transfer
@@ -74,7 +86,9 @@ final class PhoneLibrary: ObservableObject {
         guard let review = latestReview(for: original.id) else { return original }
         var metadata = original
         metadata.exerciseID = review.exerciseID
-        metadata.equipment = ExerciseLibrary.find(id: review.exerciseID)?.equipment ?? original.equipment
+        metadata.equipment = review.exerciseID == original.exerciseID
+            ? original.equipment
+            : ExerciseLibrary.find(id: review.exerciseID)?.equipment ?? original.equipment
         metadata.actualReps = review.actualReps
         metadata.weightKG = review.weightKG
         metadata.labelReviewStatus = .corrected
