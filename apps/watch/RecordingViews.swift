@@ -7,6 +7,7 @@ struct RecordingHomeView: View {
   @State private var showingExercises = false
   @State private var showingRecordings = false
   @State private var confirmPreserve = false
+  @State private var recordingToDelete: RecordingMetadata?
 
   var body: some View {
     NavigationStack {
@@ -211,12 +212,32 @@ struct RecordingHomeView: View {
             if metadata.status == .interrupted {
               Text("Interrupted").font(.caption2).foregroundStyle(.orange)
             }
+            Button("Delete Watch copy", role: .destructive) { recordingToDelete = metadata }
+              .font(.caption2)
           }
         }
         Button("Retry iPhone transfer") { Task { await controller.retryTransfers() } }
       }
       .navigationTitle("Recordings")
       .task { await controller.refreshRecordings() }
+      .confirmationDialog(
+        "Delete this Watch copy?",
+        isPresented: Binding(
+          get: { recordingToDelete != nil }, set: { if !$0 { recordingToDelete = nil } }),
+        titleVisibility: .visible
+      ) {
+        if let selected = recordingToDelete {
+          Button("Delete Watch copy", role: .destructive) {
+            recordingToDelete = nil
+            Task { await controller.deleteSavedRecording(id: selected.id) }
+          }
+        }
+        Button("Keep recording", role: .cancel) { recordingToDelete = nil }
+      } message: {
+        Text(
+          "Unsent motion may be permanently lost. Queued transfers are cancelled where possible. iPhone copies and exports are separate."
+        )
+      }
     }
   }
 }

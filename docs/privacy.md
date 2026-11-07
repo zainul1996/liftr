@@ -8,7 +8,7 @@ WatchConnectivity transfers recording files to the paired iPhone. The apps store
 
 Use a pseudonym for participant IDs. Do not commit raw datasets, exports, HealthKit exports, signing material or credentials. The repository's ignore rules reduce accidental inclusion but do not replace reviewing staged files.
 
-You can delete individual recordings from their phone detail screen. That action deletes the phone copy and phone review history. It does not remove Watch copies, exports or backups. A Watch transfer retry may deliver that UUID again. Full coordinated retention and deletion across devices is a later reliability requirement, so manage source copies explicitly during research.
+You can delete saved recordings from the Watch recordings list or the iPhone detail screen. Watch deletion requires confirmation, warns about unsent motion, and cancels queued transfers where possible. Active recordings and drafts cannot be deleted through that saved-record action. That action deletes the phone copy and phone review history. It does not remove Watch copies, exports or backups. A Watch transfer retry may deliver that UUID again. Full coordinated retention and deletion across devices is a later reliability requirement, so manage source copies explicitly during research.
 
 There is no automatic retention period in this build. Review storage regularly, export what you need, verify the export, and then delete copies you no longer want. Uninstalling an app may remove its local recordings. Never uninstall the only copy before checking a backup export.
 

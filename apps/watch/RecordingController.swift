@@ -265,6 +265,20 @@ final class RecordingController: ObservableObject {
     }
   }
 
+  func deleteSavedRecording(id: UUID) async {
+    guard metadata?.id != id, recentRecordings.contains(where: { $0.id == id }) else {
+      errorMessage = "An active recording or unfinished draft cannot be deleted here."
+      return
+    }
+    transfer.cancelPending(recordingID: id)
+    do {
+      try await store.delete(id: id)
+      await refreshRecordings()
+    } catch {
+      errorMessage = "The Watch copy could not be deleted: \(error.localizedDescription)"
+    }
+  }
+
   func retryTransfers() async { await transfer.retryPending() }
 
   func recoverDrafts() async {

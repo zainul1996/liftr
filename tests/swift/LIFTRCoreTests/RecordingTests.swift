@@ -179,4 +179,21 @@ final class RecordingTests: XCTestCase {
     }
     XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
   }
+
+  func testDeletingOneRecordingPreservesOtherSavedMotionAndRetryQueue() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = try RecordingStore(directory: directory)
+    let deleted = fixture()
+    let kept = fixture()
+    let deletedURL = try await store.save(deleted)
+    let keptURL = try await store.save(kept)
+    try await store.delete(id: deleted.id)
+    let remaining = try await store.list()
+    let pending = try await store.pendingTransfers()
+    XCTAssertEqual(remaining.map(\.id), [kept.id])
+    XCTAssertEqual(pending.map(\.id), [kept.id])
+    XCTAssertFalse(FileManager.default.fileExists(atPath: deletedURL.path))
+    XCTAssertTrue(FileManager.default.fileExists(atPath: keptURL.path))
+  }
 }

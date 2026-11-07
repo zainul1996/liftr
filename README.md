@@ -116,7 +116,7 @@ Open LIFTR on the paired iPhone. Background delivery may take time. The recordin
 
 Corrections use a separate review history. The original stored recording stays intact. A reviewed export includes the effective metadata and annotations, original metadata/annotations, and correction history. The samples remain raw. The export button uses the system share sheet. Choose Save to Files or another destination you trust. Export one recording from its detail screen or all recordings from the list.
 
-Deleting from iPhone removes that device's copy. Watch files, system backups and previously exported files are separate. Do not assume deletion propagates to them.
+Delete Watch copy in the Watch recordings list removes that saved source file after confirmation and cancels any still-queued transfer where possible. Unsent recordings may be permanently lost. Deleting from iPhone removes that device's copy. Files on the other device, system backups and previously exported files are separate. Do not assume deletion propagates to them.
 
 ## Validate exported data
 
