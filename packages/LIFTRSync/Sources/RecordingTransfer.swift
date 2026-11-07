@@ -40,6 +40,15 @@ import LIFTRPersistence
         status = "Queued for iPhone"
       #endif
     }
+    /// Cancels queued copies where the system still permits it. Already delivered copies are separate.
+    @discardableResult public func cancelPending(recordingID: UUID) -> Int {
+      guard WCSession.isSupported() else { return 0 }
+      let pending = WCSession.default.outstandingFileTransfers.filter {
+        ($0.file.metadata?["recordingID"] as? String) == recordingID.uuidString
+      }
+      for transfer in pending { transfer.cancel() }
+      return pending.count
+    }
     public func retryPending() async {
       #if os(watchOS)
         do {

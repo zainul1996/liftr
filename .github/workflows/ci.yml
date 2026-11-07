@@ -2,7 +2,7 @@ name: Validate LIFTR
 on:
   pull_request:
   push:
-    branches: [main, feature/run1-integration]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

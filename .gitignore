@@ -2,6 +2,8 @@
 recordings/
 *.liftr.json
 *.partial
+*.partial.finishing
+*.incoming
 *.draft.json
 ml/datasets/raw/
 ml/datasets/private/
