@@ -28,6 +28,10 @@ struct RecordingsView: View {
                         Text("LIFT MORE. LOG LESS.").font(.caption.weight(.bold)).tracking(2).foregroundStyle(Color.liftrLime)
                         Text("Your movement,\nready to review.").font(.largeTitle.weight(.bold))
                         Label(library.syncStatus, systemImage: "applewatch").font(.footnote).foregroundStyle(.secondary)
+                        if library.damagedRecordingCount > 0 {
+                            Label("\(library.damagedRecordingCount) recording file(s) need recovery. Other recordings remain available.", systemImage: "exclamationmark.triangle")
+                                .font(.footnote).foregroundStyle(.orange)
+                        }
                     }.padding(.vertical, 12).listRowBackground(Color.clear)
                 }
                 if library.recordings.isEmpty {

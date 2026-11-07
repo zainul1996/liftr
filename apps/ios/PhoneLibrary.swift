@@ -27,6 +27,7 @@ final class PhoneLibrary: ObservableObject {
     @Published private(set) var reviews: [String: [RecordingReview]] = [:]
     @Published private(set) var syncStatus = "Starting connection"
     @Published private(set) var isLoading = false
+    @Published private(set) var damagedRecordingCount = 0
     @Published var errorMessage: String?
 
     private var store: RecordingStore?
@@ -70,7 +71,10 @@ final class PhoneLibrary: ObservableObject {
         guard let store else { return }
         isLoading = true
         defer { isLoading = false }
-        do { recordings = try await store.list() }
+        do {
+            recordings = try await store.list()
+            damagedRecordingCount = await store.damagedRecordingCount
+        }
         catch { errorMessage = "Could not load recordings: \(error.localizedDescription)" }
     }
 
