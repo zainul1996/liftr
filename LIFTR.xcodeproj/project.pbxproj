@@ -1,0 +1,530 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		33B2AB6CA31D00ECA45E42A6 /* LIFTRSync in Frameworks */ = {isa = PBXBuildFile; productRef = 5570C656F6A45CC3192B0A84 /* LIFTRSync */; };
+		3E419F3FFB410C5A26F6B336 /* LIFTRSync in Frameworks */ = {isa = PBXBuildFile; productRef = 847F379274EC72CC06DC6124 /* LIFTRSync */; };
+		4593E7547E69CC3B761E928E /* LIFTRPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 7A2F2A45167403B129C1F143 /* LIFTRPersistence */; };
+		4D803DF463DC0A118097AD8F /* LIFTRPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = 7AC5C231259440C2FB42B7DC /* LIFTRPersistence */; };
+		55E549F0ABF61B6644AC2152 /* LIFTRMotion in Frameworks */ = {isa = PBXBuildFile; productRef = EB75882716F191CC4C7BC215 /* LIFTRMotion */; };
+		5907274D73908D1878A8937A /* RecordingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 881C335FE5CA75AE331D196C /* RecordingDetailView.swift */; };
+		7F789E62A3B4BCC551E8E7C6 /* LIFTRPhoneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8AAC5CC2E23E3997CD7A78 /* LIFTRPhoneApp.swift */; };
+		8CE10793F1716CFC0F23DF9D /* RecordingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACD4851552C6FC2311DDDBB /* RecordingController.swift */; };
+		A4B6BB1CA442146322DA9EB2 /* LIFTRWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3149A27FEC0E6ED6E8959EC /* LIFTRWatchApp.swift */; };
+		B87B5803F6A15A72DD066162 /* LIFTRWatch.app in Embed Dependencies */ = {isa = PBXBuildFile; fileRef = 26EDFF6E8CEFB79CB01B3E07 /* LIFTRWatch.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C48719DCE6E9E6512DBB8F03 /* PhoneLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D77472374690CE25C02646 /* PhoneLibrary.swift */; };
+		CCE488583CD7268D262C2D76 /* RecordingViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16585A110CA696ECFACC31D5 /* RecordingViews.swift */; };
+		D736527C8C31CFCCC2D58A07 /* LIFTRCore in Frameworks */ = {isa = PBXBuildFile; productRef = F3973C081F8CFDBC343B39A3 /* LIFTRCore */; };
+		DA058569AE7B53E75D6EE19B /* LIFTRCore in Frameworks */ = {isa = PBXBuildFile; productRef = 3E13C8226028A3A20589EEF0 /* LIFTRCore */; };
+		DADE05AB1D7721AEB08CA904 /* RecordingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DFDE88E6A4EE5118796EC7A /* RecordingsView.swift */; };
+		E22D2EB4D6350C91393C6EE2 /* WorkoutSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC39DC34FE9EFF35E41FCF03 /* WorkoutSessionController.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9B99B8F69E4C65E16379021F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9914BF65CCD52B177655CF27 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A9607D2ACEC45C62C1B0B08E;
+			remoteInfo = LIFTRWatch;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6273674AAF0EF931A601CCAF /* Embed Dependencies */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				B87B5803F6A15A72DD066162 /* LIFTRWatch.app in Embed Dependencies */,
+			);
+			name = "Embed Dependencies";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0F8AAC5CC2E23E3997CD7A78 /* LIFTRPhoneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LIFTRPhoneApp.swift; sourceTree = "<group>"; };
+		16585A110CA696ECFACC31D5 /* RecordingViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingViews.swift; sourceTree = "<group>"; };
+		26EDFF6E8CEFB79CB01B3E07 /* LIFTRWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LIFTRWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		46A57ED583F7766980C74C86 /* liftr */ = {isa = PBXFileReference; lastKnownFileType = folder; name = liftr; path = .; sourceTree = SOURCE_ROOT; };
+		6E65FDD649A8AC526898656A /* LIFTR.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = LIFTR.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		881C335FE5CA75AE331D196C /* RecordingDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingDetailView.swift; sourceTree = "<group>"; };
+		8DFDE88E6A4EE5118796EC7A /* RecordingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingsView.swift; sourceTree = "<group>"; };
+		D0D77472374690CE25C02646 /* PhoneLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhoneLibrary.swift; sourceTree = "<group>"; };
+		EACD4851552C6FC2311DDDBB /* RecordingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingController.swift; sourceTree = "<group>"; };
+		F3149A27FEC0E6ED6E8959EC /* LIFTRWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LIFTRWatchApp.swift; sourceTree = "<group>"; };
+		FC39DC34FE9EFF35E41FCF03 /* WorkoutSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionController.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		824E8B6FC60D290CBC4DD0AC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA058569AE7B53E75D6EE19B /* LIFTRCore in Frameworks */,
+				4593E7547E69CC3B761E928E /* LIFTRPersistence in Frameworks */,
+				33B2AB6CA31D00ECA45E42A6 /* LIFTRSync in Frameworks */,
+				55E549F0ABF61B6644AC2152 /* LIFTRMotion in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E066F260C4C196872174ECE8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D736527C8C31CFCCC2D58A07 /* LIFTRCore in Frameworks */,
+				4D803DF463DC0A118097AD8F /* LIFTRPersistence in Frameworks */,
+				3E419F3FFB410C5A26F6B336 /* LIFTRSync in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C1DA0BA9E7974B08E530E7DA /* ios */ = {
+			isa = PBXGroup;
+			children = (
+				0F8AAC5CC2E23E3997CD7A78 /* LIFTRPhoneApp.swift */,
+				D0D77472374690CE25C02646 /* PhoneLibrary.swift */,
+				881C335FE5CA75AE331D196C /* RecordingDetailView.swift */,
+				8DFDE88E6A4EE5118796EC7A /* RecordingsView.swift */,
+			);
+			name = ios;
+			path = apps/ios;
+			sourceTree = "<group>";
+		};
+		CB838600FBDDE3540CDFA203 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6E65FDD649A8AC526898656A /* LIFTR.app */,
+				26EDFF6E8CEFB79CB01B3E07 /* LIFTRWatch.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE0D8B57FA527AA2105BA087 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				46A57ED583F7766980C74C86 /* liftr */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+		D7C7F8929907689369579F97 = {
+			isa = PBXGroup;
+			children = (
+				C1DA0BA9E7974B08E530E7DA /* ios */,
+				CE0D8B57FA527AA2105BA087 /* Packages */,
+				F38957CA493C5CC37C626259 /* watch */,
+				CB838600FBDDE3540CDFA203 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F38957CA493C5CC37C626259 /* watch */ = {
+			isa = PBXGroup;
+			children = (
+				F3149A27FEC0E6ED6E8959EC /* LIFTRWatchApp.swift */,
+				EACD4851552C6FC2311DDDBB /* RecordingController.swift */,
+				16585A110CA696ECFACC31D5 /* RecordingViews.swift */,
+				FC39DC34FE9EFF35E41FCF03 /* WorkoutSessionController.swift */,
+			);
+			name = watch;
+			path = apps/watch;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A9607D2ACEC45C62C1B0B08E /* LIFTRWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C08F6D72430C0C4C75363C1 /* Build configuration list for PBXNativeTarget "LIFTRWatch" */;
+			buildPhases = (
+				5E41CAF7B1BE07BE3E5C0E2B /* Sources */,
+				824E8B6FC60D290CBC4DD0AC /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LIFTRWatch;
+			packageProductDependencies = (
+				3E13C8226028A3A20589EEF0 /* LIFTRCore */,
+				7A2F2A45167403B129C1F143 /* LIFTRPersistence */,
+				5570C656F6A45CC3192B0A84 /* LIFTRSync */,
+				EB75882716F191CC4C7BC215 /* LIFTRMotion */,
+			);
+			productName = LIFTRWatch;
+			productReference = 26EDFF6E8CEFB79CB01B3E07 /* LIFTRWatch.app */;
+			productType = "com.apple.product-type.application";
+		};
+		DCFCFE672335C218038A1D66 /* LIFTR */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 216BA68F88EA1FF47C0F2B52 /* Build configuration list for PBXNativeTarget "LIFTR" */;
+			buildPhases = (
+				79F14A1C924949D52EE64CE8 /* Sources */,
+				E066F260C4C196872174ECE8 /* Frameworks */,
+				6273674AAF0EF931A601CCAF /* Embed Dependencies */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A76D4CE34AE9A6BC71196AF1 /* PBXTargetDependency */,
+			);
+			name = LIFTR;
+			packageProductDependencies = (
+				F3973C081F8CFDBC343B39A3 /* LIFTRCore */,
+				7AC5C231259440C2FB42B7DC /* LIFTRPersistence */,
+				847F379274EC72CC06DC6124 /* LIFTRSync */,
+			);
+			productName = LIFTR;
+			productReference = 6E65FDD649A8AC526898656A /* LIFTR.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9914BF65CCD52B177655CF27 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					A9607D2ACEC45C62C1B0B08E = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					DCFCFE672335C218038A1D66 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 47155370682B63419223C828 /* Build configuration list for PBXProject "LIFTR" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D7C7F8929907689369579F97;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				64DA25CE998254EF46C67D98 /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = CB838600FBDDE3540CDFA203 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DCFCFE672335C218038A1D66 /* LIFTR */,
+				A9607D2ACEC45C62C1B0B08E /* LIFTRWatch */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5E41CAF7B1BE07BE3E5C0E2B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A4B6BB1CA442146322DA9EB2 /* LIFTRWatchApp.swift in Sources */,
+				8CE10793F1716CFC0F23DF9D /* RecordingController.swift in Sources */,
+				CCE488583CD7268D262C2D76 /* RecordingViews.swift in Sources */,
+				E22D2EB4D6350C91393C6EE2 /* WorkoutSessionController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		79F14A1C924949D52EE64CE8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7F789E62A3B4BCC551E8E7C6 /* LIFTRPhoneApp.swift in Sources */,
+				C48719DCE6E9E6512DBB8F03 /* PhoneLibrary.swift in Sources */,
+				5907274D73908D1878A8937A /* RecordingDetailView.swift in Sources */,
+				DADE05AB1D7721AEB08CA904 /* RecordingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A76D4CE34AE9A6BC71196AF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A9607D2ACEC45C62C1B0B08E /* LIFTRWatch */;
+			targetProxy = 9B99B8F69E4C65E16379021F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		03DCCA601664ECA1AD2E4A6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "config/iOS-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zainul.liftr;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		4E9814463520F3216F33A2C3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = config/LIFTRWatch.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "config/watchOS-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.zainul.liftr.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		B07D7E3452D9891CCEEBDEF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		BEF968952F863A2333D4EDEC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = config/LIFTRWatch.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "config/watchOS-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.zainul.liftr.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Release;
+		};
+		C8D6034D499EB89F81749216 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		F32B8DE55F2A4C773AEA44F3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "config/iOS-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zainul.liftr;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		216BA68F88EA1FF47C0F2B52 /* Build configuration list for PBXNativeTarget "LIFTR" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				03DCCA601664ECA1AD2E4A6F /* Debug */,
+				F32B8DE55F2A4C773AEA44F3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		47155370682B63419223C828 /* Build configuration list for PBXProject "LIFTR" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B07D7E3452D9891CCEEBDEF9 /* Debug */,
+				C8D6034D499EB89F81749216 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4C08F6D72430C0C4C75363C1 /* Build configuration list for PBXNativeTarget "LIFTRWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E9814463520F3216F33A2C3 /* Debug */,
+				BEF968952F863A2333D4EDEC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		64DA25CE998254EF46C67D98 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		3E13C8226028A3A20589EEF0 /* LIFTRCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRCore;
+		};
+		5570C656F6A45CC3192B0A84 /* LIFTRSync */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRSync;
+		};
+		7A2F2A45167403B129C1F143 /* LIFTRPersistence */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRPersistence;
+		};
+		7AC5C231259440C2FB42B7DC /* LIFTRPersistence */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRPersistence;
+		};
+		847F379274EC72CC06DC6124 /* LIFTRSync */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRSync;
+		};
+		EB75882716F191CC4C7BC215 /* LIFTRMotion */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRMotion;
+		};
+		F3973C081F8CFDBC343B39A3 /* LIFTRCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LIFTRCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 9914BF65CCD52B177655CF27 /* Project object */;
+}

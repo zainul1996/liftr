@@ -1,0 +1,44 @@
+name: Validate LIFTR
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: liftr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  swift-and-python:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.2'
+      - name: Set toolchain for scripts
+        run: echo "DEVELOPER_DIR=$(xcode-select -p)" >> "$GITHUB_ENV"
+      - name: Swift and schema tests
+        run: ./scripts/test.sh
+      - name: Swift formatting
+        run: xcrun swift-format lint --strict --recursive packages apps tests/swift
+  app-builds:
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, watch]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.2'
+      - name: Set toolchain for scripts
+        run: echo "DEVELOPER_DIR=$(xcode-select -p)" >> "$GITHUB_ENV"
+      - name: Install project generator
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: brew install xcodegen
+      - run: ./scripts/build-${{ matrix.platform }}.sh
