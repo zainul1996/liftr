@@ -128,4 +128,52 @@ final class RecordingTests: XCTestCase {
     let recovered = try RecordingMetadataReader.read(from: url)
     XCTAssertEqual(recovered.id, metadata.id)
   }
+
+  func testOneDamagedSummaryIsRebuiltWithoutHidingHealthyRecordings() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = try RecordingStore(directory: directory)
+    let healthy = fixture()
+    let damagedSummary = fixture()
+    _ = try await store.save(healthy)
+    _ = try await store.save(damagedSummary)
+    try Data("broken summary".utf8).write(
+      to: directory.appendingPathComponent(damagedSummary.id.uuidString + ".metadata.json"))
+    let recordings = try await store.list()
+    XCTAssertEqual(Set(recordings.map(\.id)), Set([healthy.id, damagedSummary.id]))
+    let damagedCount = await store.damagedRecordingCount
+    XCTAssertEqual(damagedCount, 0)
+  }
+  func testUnrecoverableFileIsReportedAndHealthyRecordingStaysVisible() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let store = try RecordingStore(directory: directory)
+    let healthy = fixture()
+    _ = try await store.save(healthy)
+    try Data("corrupt raw file".utf8).write(
+      to: directory.appendingPathComponent(UUID().uuidString + ".liftr.json"))
+    let recordings = try await store.list()
+    XCTAssertEqual(recordings.map(\.id), [healthy.id])
+    let damagedCount = await store.damagedRecordingCount
+    XCTAssertEqual(damagedCount, 1)
+  }
+  func testMalformedIncomingSampleBodyIsRejectedBeforeCopyOrAcknowledgement() async throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let incoming = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer {
+      try? FileManager.default.removeItem(at: directory)
+      try? FileManager.default.removeItem(at: incoming)
+    }
+    let store = try RecordingStore(directory: directory)
+    let metadata = fixture().metadata
+    var malformed = Data("{\"metadata\":".utf8)
+    malformed.append(try RecordingJSON.encoder().encode(metadata))
+    malformed.append(Data(",\"samples\":[BROKEN],\"annotations\":[]}".utf8))
+    try malformed.write(to: incoming)
+    do {
+      _ = try await store.importFile(at: incoming, expectedID: metadata.id)
+      XCTFail("Malformed raw JSON imported")
+    } catch { /* no canonical copy can be acknowledged */  }
+    XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
+  }
 }

@@ -3,6 +3,7 @@ import LIFTRCore
 
 public actor RecordingStore {
   public let directory: URL
+  public private(set) var damagedRecordingCount = 0
   public init(directory: URL) throws {
     self.directory = directory
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -24,7 +25,9 @@ public actor RecordingStore {
   public func importFile(
     at source: URL, metadata: RecordingMetadata? = nil, expectedID: UUID? = nil
   ) throws -> URL {
-    let resolved = try metadata ?? RecordingMetadataReader.read(from: source)
+    let resolved =
+      try metadata
+      ?? RecordingJSON.decoder().decode(Recording.self, from: Data(contentsOf: source)).metadata
     if let expectedID, resolved.id != expectedID { throw StoreError.identityMismatch }
     try validate(metadata: resolved)
     let destination = fileURL(id: resolved.id)
@@ -48,23 +51,34 @@ public actor RecordingStore {
   public func list() throws -> [RecordingMetadata] {
     let urls = try FileManager.default.contentsOfDirectory(
       at: directory, includingPropertiesForKeys: nil)
-    // Recover an index entry after an interruption between canonical write and summary write.
+    damagedRecordingCount = 0
+    var result: [RecordingMetadata] = []
     for url in urls where url.lastPathComponent.hasSuffix(".liftr.json") {
       let idText = url.lastPathComponent.replacingOccurrences(of: ".liftr.json", with: "")
-      if let id = UUID(uuidString: idText),
-        !FileManager.default.fileExists(atPath: summaryURL(id: id).path)
-      {
-        let metadata = try RecordingMetadataReader.read(from: url)
-        guard metadata.id == id else { throw StoreError.identityMismatch }
-        try writeSummary(metadata)
+      guard let id = UUID(uuidString: idText) else {
+        damagedRecordingCount += 1
+        continue
+      }
+      do {
+        let summary = try? RecordingJSON.decoder().decode(
+          RecordingMetadata.self, from: Data(contentsOf: summaryURL(id: id)))
+        let metadata: RecordingMetadata
+        if let summary, summary.id == id {
+          metadata = summary
+        } else {
+          // Recovery reads raw JSON in fixed-size chunks, never a Watch-sized sample array.
+          metadata = try RecordingMetadataReader.read(from: url)
+          guard metadata.id == id else { throw StoreError.identityMismatch }
+          try writeSummary(metadata)
+        }
+        try validate(metadata: metadata)
+        result.append(metadata)
+      } catch {
+        // Preserve the damaged item for recovery without hiding healthy recordings.
+        damagedRecordingCount += 1
       }
     }
-    return try FileManager.default.contentsOfDirectory(
-      at: directory, includingPropertiesForKeys: nil
-    )
-    .filter { $0.lastPathComponent.hasSuffix(".metadata.json") }
-    .map { try RecordingJSON.decoder().decode(RecordingMetadata.self, from: Data(contentsOf: $0)) }
-    .sorted { $0.startedAt > $1.startedAt }
+    return result.sorted { $0.startedAt > $1.startedAt }
   }
   public func load(id: UUID) throws -> Recording {
     let recording = try RecordingJSON.decoder().decode(
