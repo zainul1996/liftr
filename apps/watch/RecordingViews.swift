@@ -54,6 +54,17 @@ struct RecordingHomeView: View {
                     Text("Change exercise").font(.caption2).foregroundStyle(.secondary)
                 }.frame(maxWidth: .infinity)
             }
+            if !controller.workout.isActive && !controller.isContinuousRecording {
+                Toggle("Record rest too", isOn: $controller.continuousMode).font(.caption)
+                if controller.continuousMode {
+                    Text("Continuous raw capture includes rest and transitions. Mark each set. Battery use needs device testing.")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+            if controller.isContinuousRecording {
+                Text(controller.continuousCaptureStopped ? "Capture stopped. Save session below." : "Continuous capture · \(controller.annotatedSetCount) labelled sets")
+                    .font(.caption2).foregroundStyle(controller.continuousCaptureStopped ? Color.orange : Color.green)
+            }
             TextField("Machine variant", text: $controller.equipmentVariant).font(.caption)
             Button {
                 Task { await controller.startSet() }
@@ -63,8 +74,9 @@ struct RecordingHomeView: View {
             }
             .buttonStyle(.borderedProminent)
             .foregroundStyle(.black)
+            .disabled(controller.continuousCaptureStopped && controller.isContinuousRecording)
             Text("Data collection mode").font(.caption2).foregroundStyle(.secondary)
-            if controller.workout.isActive {
+            if controller.workout.isActive || controller.isContinuousRecording {
                 Button("End Workout") { Task { await controller.finishWorkout() } }.tint(.gray)
             }
             Button("Recordings · \(controller.recentRecordings.count)") { showingRecordings = true }
@@ -109,11 +121,17 @@ struct RecordingHomeView: View {
                     Text(controller.actualReps == 0 ? "Enter reps" : "\(controller.actualReps)").font(.title3)
                 }
             }
+            .disabled(controller.labelsLockedForSaveRetry)
             Stepper(value: $controller.weightKG, in: 0...500, step: 0.5) {
                 VStack(alignment: .leading) {
                     Text("Weight · kg").font(.caption2).foregroundStyle(.secondary)
                     Text(controller.weightKG, format: .number.precision(.fractionLength(0...1))).font(.title3)
                 }
+            }
+            .disabled(controller.labelsLockedForSaveRetry)
+            if controller.labelsLockedForSaveRetry {
+                Text("Labels are finalized. Retry saving this file, then correct labels on iPhone if needed.")
+                    .font(.caption2).foregroundStyle(.orange)
             }
             if controller.quality.gapCount > 0 || controller.quality.rejectedSamples > 0 {
                 Text("Signal check: \(controller.quality.gapCount) gaps, \(controller.quality.rejectedSamples) rejected samples.")
@@ -121,9 +139,9 @@ struct RecordingHomeView: View {
             }
             Button("Save Set") { Task { await controller.saveSet() } }
                 .buttonStyle(.borderedProminent).foregroundStyle(.black)
-                .disabled(controller.actualReps <= 0 || controller.quality.sampleCount == 0)
-            Button("Keep unfinished draft") { confirmPreserve = true }
-                .font(.caption2).tint(.gray)
+                .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
+            Button(controller.isContinuousRecording ? "Leave interval unlabelled" : "Keep unfinished draft") { confirmPreserve = true }
+                .font(.caption2).tint(.gray).disabled(controller.labelsLockedForSaveRetry)
         }
     }
 

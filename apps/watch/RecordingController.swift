@@ -15,6 +15,11 @@ final class RecordingController: ObservableObject {
     @Published var actualReps = 0
     @Published var weightKG = 0.0
     @Published var equipmentVariant = ""
+    @Published var continuousMode = false
+    @Published private(set) var isContinuousRecording = false
+    @Published private(set) var continuousCaptureStopped = false
+    @Published private(set) var annotatedSetCount = 0
+    @Published private(set) var labelsLockedForSaveRetry = false
     @Published var errorMessage: String?
     @Published private(set) var quality = MotionQuality()
     @Published private(set) var recordingStartedAt: Date?
@@ -29,6 +34,10 @@ final class RecordingController: ObservableObject {
     private var metadata: RecordingMetadata?
     private var sessionID = UUID()
     private var pendingFinishedFile: URL?
+    private var setStartTimestamp: TimeInterval?
+    private var setEndTimestamp: TimeInterval?
+    private var activeSetExercise: ExerciseDefinition?
+    private var annotations: [SetAnnotation] = []
     private let draftDirectory: URL
 
     init() throws {
@@ -47,7 +56,21 @@ final class RecordingController: ObservableObject {
         guard phase == .ready || phase == .rest else { return }
         phase = .preparing
         errorMessage = nil
+        let workoutWasActive = workout.isActive
         do {
+            if isContinuousRecording {
+                guard !continuousCaptureStopped else {
+                    phase = .rest
+                    errorMessage = "Capture has stopped. End Workout to save this session before starting another set."
+                    return
+                }
+                activeSetExercise = selectedExercise
+                setStartTimestamp = ProcessInfo.processInfo.systemUptime
+                actualReps = 0
+                recordingStartedAt = Date()
+                phase = .recording
+                return
+            }
             if !workout.isActive { sessionID = UUID(); try await workout.start() }
             if workout.isPaused { workout.resume() }
             let device = WKInterfaceDevice.current()
@@ -56,19 +79,32 @@ final class RecordingController: ObservableObject {
             uname(&machine)
             let hardware = withUnsafeBytes(of: &machine.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
             let metadata = RecordingMetadata(participantID: participantID, sessionID: sessionID,
-                                             exerciseID: selectedExercise.id,
-                                             equipment: equipmentVariant.isEmpty ? selectedExercise.equipment : equipmentVariant,
-                                             weightKG: weightKG, startedAt: Date(),
+                                             exerciseID: continuousMode ? nil : selectedExercise.id,
+                                             equipment: continuousMode ? nil : (equipmentVariant.isEmpty ? selectedExercise.equipment : equipmentVariant),
+                                             weightKG: continuousMode ? nil : weightKG, startedAt: Date(),
                                              watchWrist: device.wristLocation == .left ? "left" : "right",
-                                             watchModel: hardware, watchOSVersion: device.systemVersion)
+                                             watchModel: hardware, watchOSVersion: device.systemVersion,
+                                             mode: continuousMode ? .continuous : .set)
             try recorder.start(directory: draftDirectory, metadata: metadata)
             self.metadata = metadata
             pendingFinishedFile = nil
+            labelsLockedForSaveRetry = false
             actualReps = 0
             quality = .init()
             recordingStartedAt = metadata.startedAt
-            phase = .recording
+            annotations = []
+            annotatedSetCount = 0
+            continuousCaptureStopped = false
+            isContinuousRecording = continuousMode
+            if continuousMode {
+                restStartedAt = Date()
+                phase = .rest
+            } else {
+                activeSetExercise = selectedExercise
+                phase = .recording
+            }
         } catch {
+            if !workoutWasActive && workout.isActive { try? await workout.finish() }
             phase = .ready
             errorMessage = error.localizedDescription
         }
@@ -76,21 +112,48 @@ final class RecordingController: ObservableObject {
 
     func endSet() {
         guard phase == .recording else { return }
-        quality = recorder.stop()
-        metadata?.endedAt = Date()
+        quality = isContinuousRecording ? recorder.snapshot() : recorder.stop()
+        setEndTimestamp = quality.lastTimestamp
+        if !isContinuousRecording { metadata?.endedAt = Date() }
         phase = .review
-        if quality.sampleCount == 0 { errorMessage = "No motion samples were captured. This set cannot be saved as a valid recording." }
+        if quality.sampleCount < 2 { errorMessage = "At least two sensor samples are needed. Keep this recording unfinished and try a longer set." }
     }
 
     func saveSet() async {
-        guard phase == .review, var metadata, quality.sampleCount > 0,
+        guard phase == .review, var metadata, quality.sampleCount > 1,
               actualReps > 0, weightKG.isFinite, weightKG >= 0 else { return }
         phase = .saving
         errorMessage = nil
-        metadata.actualReps = actualReps
-        metadata.weightKG = weightKG
-        metadata.labelReviewStatus = .reviewed
-        metadata.endedAt = metadata.endedAt ?? Date()
+        if isContinuousRecording {
+            guard let rawFirst = quality.firstTimestamp, let end = setEndTimestamp,
+                  let requestedStart = setStartTimestamp, end > requestedStart else {
+                phase = .review
+                errorMessage = "No motion samples fall inside this set. Keep it unfinished and try again."
+                return
+            }
+            let annotation = SetAnnotation(exerciseID: activeSetExercise?.id ?? selectedExercise.id,
+                                           startTimestamp: max(rawFirst, requestedStart), endTimestamp: end,
+                                           actualReps: actualReps, weightKG: weightKG)
+            do {
+                let next = annotations + [annotation]
+                try recorder.checkpoint(annotations: next)
+                annotations = next
+                annotatedSetCount = next.count
+                savedCount += 1
+                restStartedAt = Date()
+                phase = .rest
+            } catch {
+                phase = .review
+                errorMessage = "Set label could not be saved. Motion data remains on Watch. \(error.localizedDescription)"
+            }
+            return
+        }
+        if pendingFinishedFile == nil {
+            metadata.actualReps = actualReps
+            metadata.weightKG = weightKG
+            metadata.labelReviewStatus = .reviewed
+            metadata.endedAt = metadata.endedAt ?? Date()
+        }
         do {
             let annotation = SetAnnotation(exerciseID: metadata.exerciseID ?? selectedExercise.id,
                                            startTimestamp: quality.firstTimestamp!, endTimestamp: quality.lastTimestamp!,
@@ -100,6 +163,7 @@ final class RecordingController: ObservableObject {
             else {
                 source = try recorder.finish(metadata: metadata, annotations: [annotation])
                 pendingFinishedFile = source
+                labelsLockedForSaveRetry = true
             }
             let destination = try await store.importFile(at: source, metadata: metadata)
             transfer.enqueue(fileURL: destination, recordingID: metadata.id)
@@ -107,6 +171,7 @@ final class RecordingController: ObservableObject {
             savedCount += 1
             self.metadata = nil
             pendingFinishedFile = nil
+            labelsLockedForSaveRetry = false
             restStartedAt = Date()
             phase = .rest
             await refreshRecordings()
@@ -118,6 +183,18 @@ final class RecordingController: ObservableObject {
     }
 
     func keepInterruptedDraft() {
+        guard pendingFinishedFile == nil else {
+            errorMessage = "This set is finalized. Retry Save Set before leaving. You can correct its labels on iPhone afterwards."
+            return
+        }
+        if isContinuousRecording {
+            // Leave this interval unlabelled. Continuous raw recording keeps rest and transitions.
+            setStartTimestamp = nil
+            setEndTimestamp = nil
+            restStartedAt = Date()
+            phase = .rest
+            return
+        }
         recorder.preserveDraft()
         metadata = nil
         pendingFinishedFile = nil
@@ -129,8 +206,39 @@ final class RecordingController: ObservableObject {
     func finishWorkout() async {
         guard phase == .ready || phase == .rest else { return }
         phase = .preparing
-        do { try await workout.finish(); phase = .ready }
-        catch { phase = .ready; errorMessage = "Motion recordings are saved. Health workout save failed: \(error.localizedDescription)" }
+        do {
+            if isContinuousRecording, var metadata {
+                if pendingFinishedFile == nil {
+                    quality = recorder.stop()
+                    metadata.endedAt = metadata.endedAt ?? Date()
+                }
+                continuousCaptureStopped = true
+                if pendingFinishedFile != nil || quality.sampleCount > 1 {
+                    let source: URL
+                    if let pendingFinishedFile { source = pendingFinishedFile }
+                    else {
+                        source = try recorder.finish(metadata: metadata, annotations: annotations)
+                        pendingFinishedFile = source
+                        self.metadata = metadata
+                    }
+                    let destination = try await store.importFile(at: source, metadata: metadata)
+                    transfer.enqueue(fileURL: destination, recordingID: metadata.id)
+                    if source != destination { try? FileManager.default.removeItem(at: source) }
+                } else { recorder.preserveDraft() }
+                self.metadata = nil
+                pendingFinishedFile = nil
+                isContinuousRecording = false
+                annotations = []
+            }
+            try await workout.finish()
+            phase = .ready
+            await refreshRecordings()
+        } catch {
+            phase = isContinuousRecording ? .rest : .ready
+            errorMessage = isContinuousRecording
+                ? "Session save failed. Raw capture has stopped and is retained. Retry End Workout. \(error.localizedDescription)"
+                : "Motion recordings are saved. Health workout save failed: \(error.localizedDescription)"
+        }
     }
 
     func retryTransfers() async { await transfer.retryPending() }
@@ -152,6 +260,7 @@ final class RecordingController: ObservableObject {
                 let partial = metadataURL.deletingPathExtension().deletingPathExtension().appendingPathExtension("partial")
                 try? FileManager.default.removeItem(at: partial)
                 try? FileManager.default.removeItem(at: metadataURL)
+                try? FileManager.default.removeItem(at: metadataURL.deletingPathExtension().deletingPathExtension().appendingPathExtension("annotations.json"))
                 try? FileManager.default.removeItem(at: output)
                 recoveredCount += 1
             } catch { failures += 1 }
@@ -170,11 +279,12 @@ final class RecordingController: ObservableObject {
     }
 
     private func interrupt(_ message: String) {
-        if phase == .recording {
+        if phase == .recording || isContinuousRecording {
             quality = recorder.stop()
             metadata?.endedAt = Date()
             metadata?.status = .interrupted
-            phase = .review
+            continuousCaptureStopped = isContinuousRecording
+            if phase == .recording { phase = .review }
         }
         errorMessage = message
     }

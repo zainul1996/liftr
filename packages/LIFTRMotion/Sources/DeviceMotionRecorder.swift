@@ -66,6 +66,19 @@ public final class DeviceMotionRecorder: @unchecked Sendable {
         return writer?.quality ?? .init()
     }
 
+    public func snapshot() -> MotionQuality {
+        lock.lock()
+        defer { lock.unlock() }
+        return writer?.quality ?? .init()
+    }
+
+    public func checkpoint(annotations: [SetAnnotation]) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let writer else { throw MotionError.noRecording }
+        try writer.checkpoint(annotations: annotations)
+    }
+
     public func finish(metadata: RecordingMetadata, annotations: [SetAnnotation]) throws -> URL {
         lock.lock()
         defer { lock.unlock() }

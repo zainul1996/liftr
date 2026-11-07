@@ -52,14 +52,21 @@ public enum DraftRecovery {
                 guard buffer.count < 16_384 else { throw RecoveryError.oversizedLine }
             }
             if !buffer.isEmpty { try consume(buffer) }
-            guard writer.quality.sampleCount > 0, let start = writer.quality.firstTimestamp, let end = writer.quality.lastTimestamp else {
+            guard writer.quality.sampleCount > 1, let start = writer.quality.firstTimestamp, let end = writer.quality.lastTimestamp, end > start else {
                 throw RecoveryError.noSamples
             }
             // Wall time is approximate after a crash. Raw monotonic sample boundaries stay exact.
             metadata.endedAt = metadata.startedAt.addingTimeInterval(max(0, end - start))
-            let annotations = metadata.exerciseID.map {
+            let checkpointURL = base.appendingPathExtension("annotations.json")
+            let savedAnnotations: [SetAnnotation]
+            if FileManager.default.fileExists(atPath: checkpointURL.path) {
+                savedAnnotations = try RecordingJSON.decoder().decode([SetAnnotation].self, from: Data(contentsOf: checkpointURL))
+            } else { savedAnnotations = [] }
+            let annotations = metadata.mode == .continuous ? savedAnnotations.filter {
+                $0.startTimestamp >= start && $0.endTimestamp <= end && $0.endTimestamp >= $0.startTimestamp
+            } : (metadata.exerciseID.map {
                 [SetAnnotation(exerciseID: $0, startTimestamp: start, endTimestamp: end, actualReps: nil, weightKG: metadata.weightKG)]
-            } ?? []
+            } ?? [])
             let url = try writer.finish(metadata: metadata, annotations: annotations)
             return .init(fileURL: url, metadata: metadata, sampleCount: writer.quality.sampleCount, skippedLines: skipped)
         } catch {

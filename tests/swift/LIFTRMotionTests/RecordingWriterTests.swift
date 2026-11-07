@@ -97,4 +97,38 @@ final class RecordingWriterTests: XCTestCase {
         let decoded = try RecordingJSON.decoder().decode(Recording.self, from: Data(contentsOf: final))
         XCTAssertEqual(decoded.samples.map(\.timestamp), [1, 1.02])
     }
+
+    func testOneSampleCannotBecomeACompletedRecordingOrRecoveredZeroDurationSet() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let metadata = metadata()
+        let writer = try StreamingRecordingWriter(directory: directory, metadata: metadata)
+        try writer.append(sample(2))
+        XCTAssertThrowsError(try writer.finish(metadata: metadata, annotations: []))
+        writer.preserveDraft()
+        XCTAssertThrowsError(try DraftRecovery.recover(metadataURL: writer.draftMetadataURL,
+                                                       outputDirectory: directory.appendingPathComponent("recovery")))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: writer.partialURL.path))
+    }
+
+    func testContinuousRecoveryKeepsConfirmedIntervalsAndUnlabelledRest() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        var metadata = metadata()
+        metadata.mode = .continuous
+        metadata.exerciseID = nil
+        let writer = try StreamingRecordingWriter(directory: directory, metadata: metadata)
+        for timestamp in [10.0, 10.02, 10.04, 10.06, 10.08, 10.10] { try writer.append(sample(timestamp)) }
+        let labelled = SetAnnotation(exerciseID: "machine_chest_press", startTimestamp: 10.02, endTimestamp: 10.06, actualReps: 3, weightKG: 40)
+        try writer.checkpoint(annotations: [labelled])
+        writer.preserveDraft()
+        let result = try DraftRecovery.recover(metadataURL: writer.draftMetadataURL, outputDirectory: directory.appendingPathComponent("recovery"))
+        let recording = try RecordingJSON.decoder().decode(Recording.self, from: Data(contentsOf: result.fileURL))
+        XCTAssertNil(recording.metadata.exerciseID)
+        XCTAssertEqual(recording.metadata.mode, .continuous)
+        XCTAssertEqual(recording.samples.count, 6)
+        XCTAssertEqual(recording.annotations, [labelled])
+        XCTAssertLessThan(recording.samples.first!.timestamp, recording.annotations[0].startTimestamp)
+        XCTAssertGreaterThan(recording.samples.last!.timestamp, recording.annotations[0].endTimestamp)
+    }
 }

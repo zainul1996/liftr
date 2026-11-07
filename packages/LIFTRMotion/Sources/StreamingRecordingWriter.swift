@@ -6,6 +6,7 @@ import LIFTRCore
 public final class StreamingRecordingWriter {
     public let partialURL: URL
     public let draftMetadataURL: URL
+    public let annotationCheckpointURL: URL
     public let finalURL: URL
     public private(set) var quality: MotionQuality
     private var handle: FileHandle?
@@ -16,6 +17,7 @@ public final class StreamingRecordingWriter {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         partialURL = directory.appendingPathComponent(metadata.id.uuidString + ".partial")
         draftMetadataURL = directory.appendingPathComponent(metadata.id.uuidString + ".draft.json")
+        annotationCheckpointURL = directory.appendingPathComponent(metadata.id.uuidString + ".annotations.json")
         finalURL = directory.appendingPathComponent(metadata.id.uuidString + ".liftr.json")
         quality = MotionQuality(targetHz: metadata.sensorConfiguration.targetHz)
         guard !FileManager.default.fileExists(atPath: partialURL.path),
@@ -44,8 +46,14 @@ public final class StreamingRecordingWriter {
         return true
     }
 
+    public func checkpoint(annotations: [SetAnnotation]) throws {
+        guard !finished else { throw WriterError.closed }
+        try RecordingJSON.encoder().encode(annotations).write(to: annotationCheckpointURL, options: .atomic)
+    }
+
     public func finish(metadata: RecordingMetadata, annotations: [SetAnnotation]) throws -> URL {
         guard !finished, let handle else { throw WriterError.closed }
+        guard quality.sampleCount > 1, let first = quality.firstTimestamp, let last = quality.lastTimestamp, last > first else { throw WriterError.tooFewSamples }
         guard metadata.id.uuidString == finalURL.deletingPathExtension().deletingPathExtension().lastPathComponent else { throw WriterError.wrongRecording }
         let suffix = Data("],\"metadata\":".utf8)
             + (try RecordingJSON.encoder().encode(metadata))
@@ -78,6 +86,7 @@ public final class StreamingRecordingWriter {
         finished = true
         try? FileManager.default.removeItem(at: partialURL)
         try? FileManager.default.removeItem(at: draftMetadataURL)
+        try? FileManager.default.removeItem(at: annotationCheckpointURL)
         return finalURL
     }
 
@@ -86,13 +95,14 @@ public final class StreamingRecordingWriter {
     deinit { try? handle?.close() }
 
     public enum WriterError: LocalizedError {
-        case alreadyExists, cannotCreateFile, closed, wrongRecording
+        case alreadyExists, cannotCreateFile, closed, wrongRecording, tooFewSamples
         public var errorDescription: String? {
             switch self {
             case .alreadyExists: "A recording already exists with this identifier."
             case .cannotCreateFile: "The recording file could not be created. Check available storage."
             case .closed: "This recording is already closed."
             case .wrongRecording: "The recording metadata does not match its motion file."
+            case .tooFewSamples: "At least two distinct sensor samples are needed to save a recording."
             }
         }
     }
