@@ -70,7 +70,6 @@ targets:
       properties:
         CFBundleDisplayName: LIFTR
         WKApplication: true
-        WKWatchKitApp: true
         WKCompanionAppBundleIdentifier: com.zainul.liftr
         WKRunsIndependentlyOfCompanionApp: true
         WKBackgroundModes: [workout-processing]

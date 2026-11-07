@@ -36,7 +36,5 @@
 	<string>com.zainul.liftr</string>
 	<key>WKRunsIndependentlyOfCompanionApp</key>
 	<true/>
-	<key>WKWatchKitApp</key>
-	<true/>
 </dict>
 </plist>
