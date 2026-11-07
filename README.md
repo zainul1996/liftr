@@ -106,6 +106,8 @@ Use the actual rep count, not the number of visible signal peaks. Keep a consist
 
 Record across several gym sessions, weights and speeds. The initial upper-body goal is 20 to 30 sets per exercise. Leg tracking is an experiment, with 15 sets per machine and negative examples. Do not turn these targets into an unsafe training schedule. Collect gradually during normal workouts.
 
+To include rest, walking and machine adjustments, enable Record rest too before starting a workout. The watch keeps one continuous stream while you mark and label each set. Save each set label during rest, then choose the next exercise or start the next set. End Workout finalizes and transfers the continuous file. Keep unfinished recordings until you have confirmed their export. Continuous capture consumes more storage and still needs physical battery testing.
+
 Interrupted recordings are retained as drafts. Recover them from the Watch home screen. Recovery labels them interrupted and leaves actual reps unknown. Inspect them on iPhone before including them in a dataset.
 
 ## Review, correct and export

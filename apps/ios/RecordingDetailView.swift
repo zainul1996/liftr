@@ -68,23 +68,25 @@ struct RecordingDetailView: View {
         }
       }
       if let recording {
-                if recording.metadata.mode == .continuous, !recording.annotations.isEmpty {
-                    Section("Labelled sets") {
-                        ForEach(recording.annotations) { annotation in
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(exerciseName(annotation.exerciseID)).font(.headline)
-                                HStack {
-                                    Text(annotation.actualReps.map { "\($0) reps" } ?? "Reps unknown")
-                                    if let weight = annotation.weightKG { Text("\(weight.formatted()) kg") }
-                                }.font(.caption).foregroundStyle(.secondary)
-                                if let first = recording.samples.first {
-                                    Text("\((annotation.startTimestamp - first.timestamp).formatted(.number.precision(.fractionLength(1)))) to \((annotation.endTimestamp - first.timestamp).formatted(.number.precision(.fractionLength(1)))) seconds")
-                                        .font(.caption2).foregroundStyle(.secondary)
-                                }
-                            }.padding(.vertical, 3)
-                        }
-                    }
+        if recording.metadata.mode == .continuous, !recording.annotations.isEmpty {
+          Section("Labelled sets") {
+            ForEach(recording.annotations) { annotation in
+              VStack(alignment: .leading, spacing: 5) {
+                Text(exerciseName(annotation.exerciseID)).font(.headline)
+                HStack {
+                  Text(annotation.actualReps.map { "\($0) reps" } ?? "Reps unknown")
+                  if let weight = annotation.weightKG { Text("\(weight.formatted()) kg") }
+                }.font(.caption).foregroundStyle(.secondary)
+                if let first = recording.samples.first {
+                  Text(
+                    "\((annotation.startTimestamp - first.timestamp).formatted(.number.precision(.fractionLength(1)))) to \((annotation.endTimestamp - first.timestamp).formatted(.number.precision(.fractionLength(1)))) seconds"
+                  )
+                  .font(.caption2).foregroundStyle(.secondary)
                 }
+              }.padding(.vertical, 3)
+            }
+          }
+        }
         Section("Recording quality") {
           LabeledContent("Samples", value: "\(recording.samples.count)")
           LabeledContent(
