@@ -230,6 +230,7 @@ final class RecordingController: ObservableObject {
         if pendingFinishedFile == nil {
           quality = recorder.stop()
           metadata.endedAt = metadata.endedAt ?? Date()
+                    self.metadata = metadata
         }
         continuousCaptureStopped = true
         if pendingFinishedFile != nil || quality.sampleCount > 1 {
@@ -267,7 +268,7 @@ final class RecordingController: ObservableObject {
   func retryTransfers() async { await transfer.retryPending() }
 
   func recoverDrafts() async {
-    guard phase == .ready || phase == .rest else { return }
+        guard (phase == .ready || phase == .rest), !isContinuousRecording, metadata == nil else { return }
     phase = .preparing
     let files =
       (try? FileManager.default.contentsOfDirectory(
