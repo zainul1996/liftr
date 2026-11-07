@@ -135,6 +135,33 @@ final class RecordingController: ObservableObject {
 
     func retryTransfers() async { await transfer.retryPending() }
 
+    func recoverDrafts() async {
+        guard phase == .ready || phase == .rest else { return }
+        phase = .preparing
+        let files = (try? FileManager.default.contentsOfDirectory(at: draftDirectory, includingPropertiesForKeys: nil)) ?? []
+        var recoveredCount = 0
+        var failures = 0
+        for metadataURL in files where metadataURL.lastPathComponent.hasSuffix(".draft.json") {
+            let output = draftDirectory.appendingPathComponent("Recovery-" + UUID().uuidString, isDirectory: true)
+            do {
+                let recovered = try await Task.detached(priority: .utility) {
+                    try DraftRecovery.recover(metadataURL: metadataURL, outputDirectory: output)
+                }.value
+                let destination = try await store.importFile(at: recovered.fileURL, metadata: recovered.metadata)
+                transfer.enqueue(fileURL: destination, recordingID: recovered.metadata.id)
+                let partial = metadataURL.deletingPathExtension().deletingPathExtension().appendingPathExtension("partial")
+                try? FileManager.default.removeItem(at: partial)
+                try? FileManager.default.removeItem(at: metadataURL)
+                try? FileManager.default.removeItem(at: output)
+                recoveredCount += 1
+            } catch { failures += 1 }
+        }
+        phase = .rest
+        restStartedAt = restStartedAt ?? Date()
+        await refreshRecordings()
+        errorMessage = "Recovered \(recoveredCount) recording(s) as interrupted with unknown reps. \(failures > 0 ? "\(failures) draft(s) could not be recovered and remain on Watch." : "Review labels on iPhone.")"
+    }
+
     func refreshRecordings() async {
         do { recentRecordings = try await store.list() }
         catch { errorMessage = "Recording list could not be loaded: \(error.localizedDescription)" }

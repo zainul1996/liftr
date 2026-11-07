@@ -56,4 +56,29 @@ final class RecordingWriterTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: writer.finalURL.path))
         XCTAssertThrowsError(try writer.append(sample(6)))
     }
+
+    func testCrashRecoverySkipsTruncatedTailAndLeavesRepsUnknown() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let writer = try StreamingRecordingWriter(directory: directory, metadata: metadata())
+        try writer.append(sample(20))
+        try writer.append(sample(20.02))
+        writer.preserveDraft()
+        let tail = try FileHandle(forWritingTo: writer.partialURL)
+        try tail.seekToEnd()
+        try tail.write(contentsOf: Data(",{\"timestamp\":20.04,\"gravity\":".utf8))
+        try tail.close()
+        let recovered = try DraftRecovery.recover(metadataURL: writer.draftMetadataURL,
+                                                  outputDirectory: directory.appendingPathComponent("recovered"))
+        let decoded = try RecordingJSON.decoder().decode(Recording.self, from: Data(contentsOf: recovered.fileURL))
+        XCTAssertEqual(decoded.samples.count, 2)
+        XCTAssertEqual(recovered.skippedLines, 1)
+        XCTAssertEqual(decoded.metadata.status, .interrupted)
+        XCTAssertEqual(decoded.metadata.labelReviewStatus, .unreviewed)
+        XCTAssertNil(decoded.metadata.actualReps)
+        XCTAssertNil(decoded.annotations.first?.actualReps)
+        XCTAssertEqual(decoded.annotations.first?.startTimestamp, 20)
+        XCTAssertEqual(decoded.annotations.first?.endTimestamp, 20.02)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: writer.partialURL.path))
+    }
 }

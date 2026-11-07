@@ -71,8 +71,10 @@ struct RecordingHomeView: View {
                 .font(.caption)
             SyncStatusView(transfer: controller.transfer)
             if controller.pendingDraftCount > 0 {
-                Text("\(controller.pendingDraftCount) unfinished recording(s) retained on Watch. Recovery is pending.")
+                Text("\(controller.pendingDraftCount) unfinished recording(s) retained on Watch.")
                     .font(.caption2).foregroundStyle(.orange)
+                Button("Recover recordings") { Task { await controller.recoverDrafts() } }
+                    .font(.caption2)
             }
         }
     }
