@@ -154,7 +154,7 @@ final class LIFTRWatchUITests: XCTestCase {
     capture("Three saved synthetic sets for session identity inspection", app: app)
   }
   func testContinuousCapturePreservesRestAndSetMarkers() {
-    let app = launch()
+    let app = launch(fixture: "failed-draft")
     let continuous = app.switches["watch.continuous"]
     reveal(continuous, app: app)
     continuous.tap()
@@ -163,6 +163,10 @@ final class LIFTRWatchUITests: XCTestCase {
     XCTAssertTrue(
       app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'Continuous capture'"))
         .firstMatch.waitForExistence(timeout: 5))
+    let recover = app.buttons["watch.recover"]
+    reveal(recover, app: app)
+    XCTAssertFalse(
+      recover.isEnabled, "An active continuous stream must never be recovered or deleted")
     recordAndSaveSet(app)
     recordAndSaveSet(app)
     capture("Continuous synthetic rest with two labelled intervals", app: app)
