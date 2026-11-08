@@ -19,6 +19,9 @@ final class WorkoutSessionController: NSObject, ObservableObject, HKWorkoutSessi
     guard !isActive else { return }
     #if DEBUG && targetEnvironment(simulator)
       if SimulatorTestSupport.enabled {
+        if ProcessInfo.processInfo.environment["LIFTR_UI_TEST_WORKOUT_FAILURE"] == "1" {
+          throw WorkoutError.denied
+        }
         startedAt = Date()
         isActive = true
         isPaused = false

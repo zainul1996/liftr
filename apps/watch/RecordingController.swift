@@ -360,6 +360,8 @@ final class RecordingController: ObservableObject {
   }
 
   func refreshRecordings() async {
+    let warnings = await store.takePersistenceWarnings()
+    if !warnings.isEmpty { errorMessage = warnings.joined(separator: " ") }
     do { recentRecordings = try await store.list() } catch {
       errorMessage = "Recording list could not be loaded: \(error.localizedDescription)"
     }

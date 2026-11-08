@@ -57,6 +57,7 @@ final class LIFTRPhoneUITests: XCTestCase {
     replace(app.textFields["review.reps"], with: "12")
     replace(app.textFields["review.weight"], with: "17.5")
     app.buttons["review.save"].tap()
+    XCTAssertTrue(app.buttons["review.save"].waitForNonExistence(timeout: 5))
     capture("Saved synthetic review", app: app)
     app.terminate()
     app = launch(reset: false)
@@ -110,6 +111,7 @@ final class LIFTRPhoneUITests: XCTestCase {
     review.tap()
     replace(app.textFields["review.reps"], with: "12")
     app.buttons["review.save"].tap()
+    XCTAssertTrue(app.buttons["review.save"].waitForNonExistence(timeout: 5))
     let export = app.buttons["recording.export"]
     reveal(export, app: app)
     export.tap()
@@ -135,5 +137,21 @@ final class LIFTRPhoneUITests: XCTestCase {
     XCTAssertTrue(
       app.staticTexts["Ready for your first set"].waitForExistence(timeout: 5), app.debugDescription
     )
+  }
+
+  func testExistingLegacyReviewMigratesWithoutChangingLabelsOrRaw() {
+    var app = launch(reset: false, fixture: "")
+    openFixture(app)
+    XCTAssertTrue(app.staticTexts["Dumbbell Bicep Curl"].firstMatch.exists)
+    app.terminate()
+    app = launch(reset: false, fixture: "")
+    openFixture(app)
+    XCTAssertTrue(app.staticTexts["Dumbbell Bicep Curl"].firstMatch.exists)
+    XCTAssertTrue(app.staticTexts["12"].firstMatch.exists)
+    let export = app.buttons["recording.export"]
+    reveal(export, app: app)
+    export.tap()
+    XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5))
+    capture("Legacy SQLite migration retains corrected labels", app: app)
   }
 }

@@ -1,3 +1,4 @@
+import SQLite3
 import XCTest
 
 @testable import LIFTRCore
@@ -105,6 +106,7 @@ final class RecordingTests: XCTestCase {
       try? FileManager.default.removeItem(at: incoming)
     }
     let store = try RecordingStore(directory: directory)
+    let before = try FileManager.default.contentsOfDirectory(atPath: directory.path).sorted()
     let recording = fixture()
     try RecordingJSON.encoder().encode(recording).write(to: incoming)
     do {
@@ -113,7 +115,26 @@ final class RecordingTests: XCTestCase {
     } catch RecordingStore.StoreError.identityMismatch {  // Expected before mutation.
     }
     let entries = try FileManager.default.contentsOfDirectory(atPath: directory.path)
-    XCTAssertTrue(entries.isEmpty)
+    XCTAssertTrue(
+      entries.filter { $0.hasSuffix(".liftr.json") || $0.hasSuffix(".metadata.json") }.isEmpty)
+    XCTAssertEqual(
+      try FileManager.default.contentsOfDirectory(atPath: directory.path).sorted(), before)
+    var database: OpaquePointer?
+    XCTAssertEqual(
+      sqlite3_open(directory.appendingPathComponent("recording-index.sqlite").path, &database),
+      SQLITE_OK)
+    defer { sqlite3_close(database) }
+    for table in ["recording_metadata", "transfer_acknowledgements", "recording_reviews"] {
+      var statement: OpaquePointer?
+      XCTAssertEqual(
+        sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &statement, nil),
+        SQLITE_OK)
+      XCTAssertEqual(sqlite3_step(statement), SQLITE_ROW)
+      XCTAssertEqual(sqlite3_column_int(statement, 0), 0)
+      sqlite3_finalize(statement)
+    }
+    let rejectedImports = try await store.list()
+    XCTAssertTrue(rejectedImports.isEmpty)
   }
   func testMetadataRecoveryStreamsPastLargeSampleArray() throws {
     let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -167,6 +188,7 @@ final class RecordingTests: XCTestCase {
       try? FileManager.default.removeItem(at: incoming)
     }
     let store = try RecordingStore(directory: directory)
+    let before = try FileManager.default.contentsOfDirectory(atPath: directory.path).sorted()
     let metadata = fixture().metadata
     var malformed = Data("{\"metadata\":".utf8)
     malformed.append(try RecordingJSON.encoder().encode(metadata))
@@ -177,7 +199,27 @@ final class RecordingTests: XCTestCase {
       XCTFail("Malformed raw JSON imported")
     } catch {  // No canonical copy can be acknowledged.
     }
-    XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
+    let files = try FileManager.default.contentsOfDirectory(atPath: directory.path)
+    XCTAssertTrue(
+      files.filter { $0.hasSuffix(".liftr.json") || $0.hasSuffix(".metadata.json") }.isEmpty)
+    XCTAssertEqual(
+      try FileManager.default.contentsOfDirectory(atPath: directory.path).sorted(), before)
+    var database: OpaquePointer?
+    XCTAssertEqual(
+      sqlite3_open(directory.appendingPathComponent("recording-index.sqlite").path, &database),
+      SQLITE_OK)
+    defer { sqlite3_close(database) }
+    for table in ["recording_metadata", "transfer_acknowledgements", "recording_reviews"] {
+      var statement: OpaquePointer?
+      XCTAssertEqual(
+        sqlite3_prepare_v2(database, "SELECT count(*) FROM \(table)", -1, &statement, nil),
+        SQLITE_OK)
+      XCTAssertEqual(sqlite3_step(statement), SQLITE_ROW)
+      XCTAssertEqual(sqlite3_column_int(statement, 0), 0)
+      sqlite3_finalize(statement)
+    }
+    let rejectedImports = try await store.pendingTransfers()
+    XCTAssertTrue(rejectedImports.isEmpty)
   }
 
   func testDeletingOneRecordingPreservesOtherSavedMotionAndRetryQueue() async throws {

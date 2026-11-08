@@ -111,7 +111,10 @@ import LIFTRPersistence
           }
           let imported = try await store.importFile(at: temporary, expectedID: expectedID)
           let id = imported.deletingPathExtension().deletingPathExtension().lastPathComponent
-          WCSession.default.transferUserInfo(["kind": "recordingAcknowledged", "recordingID": id])
+          if WCSession.default.activationState == .activated {
+            WCSession.default.transferUserInfo(["kind": "recordingAcknowledged", "recordingID": id])
+          }
+          // A deactivated session sends no ACK; stable-ID retry imports idempotently later.
           receivedCount += 1
           status = "Recording received"
           onReceive?()

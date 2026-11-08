@@ -13,6 +13,15 @@ struct RecordingHomeView: View {
     NavigationStack {
       ScrollView {
         VStack(spacing: 12) {
+          #if DEBUG && targetEnvironment(simulator)
+            if SimulatorTestSupport.enabled
+              && (controller.phase == .recording || controller.phase == .review)
+            {
+              Text("SYNTHETIC UI TEST DATA").font(.system(size: 9)).lineLimit(1).minimumScaleFactor(
+                0.7
+              ).foregroundStyle(.orange)
+            }
+          #endif
           switch controller.phase {
           case .preparing, .saving:
             ProgressView(controller.phase == .saving ? "Saving set" : "Preparing workout")
@@ -38,7 +47,13 @@ struct RecordingHomeView: View {
       ) {
         Button("OK") { controller.errorMessage = nil }
       } message: {
-        Text(controller.errorMessage ?? "")
+        #if DEBUG && targetEnvironment(simulator)
+          Text(
+            (SimulatorTestSupport.enabled ? "SIMULATED UI TEST. " : "")
+              + (controller.errorMessage ?? ""))
+        #else
+          Text(controller.errorMessage ?? "")
+        #endif
       }
       .confirmationDialog(
         "Keep this unfinished recording for later recovery?", isPresented: $confirmPreserve,
@@ -55,7 +70,8 @@ struct RecordingHomeView: View {
     VStack(spacing: 12) {
       #if DEBUG && targetEnvironment(simulator)
         if SimulatorTestSupport.enabled {
-          Text("SYNTHETIC UI TEST DATA").font(.caption2).foregroundStyle(.orange)
+          Text("SYNTHETIC UI TEST DATA").font(.system(size: 9)).lineLimit(1).minimumScaleFactor(0.7)
+            .foregroundStyle(.orange)
         }
       #endif
       if controller.phase == .rest, let date = controller.restStartedAt {
@@ -127,22 +143,22 @@ struct RecordingHomeView: View {
   }
 
   private var recording: some View {
-    VStack(spacing: 12) {
+    VStack(spacing: 6) {
       HStack(spacing: 6) {
         Circle().fill(.red).frame(width: 7, height: 7)
         Text("RECORDING").font(.caption2).foregroundStyle(.red)
       }
       Text(controller.selectedExercise.name).font(.headline).multilineTextAlignment(.center)
       if let date = controller.recordingStartedAt {
-        Text(date, style: .timer).font(.system(.largeTitle, design: .rounded).monospacedDigit())
+        Text(date, style: .timer).font(.system(.title2, design: .rounded).monospacedDigit())
       }
+      Button("End Set") { controller.endSet() }.accessibilityIdentifier("watch.endSet")
+        .buttonStyle(.borderedProminent).tint(.red)
       Text("\(controller.quality.sampleCount) samples").font(.caption2).foregroundStyle(.secondary)
       if let measured = controller.quality.measuredHz {
         Text("\(measured, specifier: "%.1f") Hz measured").font(.caption2).foregroundStyle(
           .secondary)
       }
-      Button("End Set") { controller.endSet() }.accessibilityIdentifier("watch.endSet")
-        .buttonStyle(.borderedProminent).tint(.red)
       Text("Finish the movement, then tap End Set.").font(.caption2).foregroundStyle(.secondary)
     }
   }
@@ -243,9 +259,10 @@ struct RecordingHomeView: View {
           Button("Delete Watch copy", role: .destructive) {
             recordingToDelete = nil
             Task { await controller.deleteSavedRecording(id: selected.id) }
-          }
+          }.accessibilityIdentifier("watch.confirmDelete")
         }
-        Button("Keep recording", role: .cancel) { recordingToDelete = nil }
+        Button("Keep recording", role: .cancel) { recordingToDelete = nil }.accessibilityIdentifier(
+          "watch.cancelDelete")
       } message: {
         Text(
           "Unsent motion may be permanently lost. Queued transfers are cancelled where possible. iPhone copies and exports are separate."

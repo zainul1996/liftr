@@ -11,7 +11,7 @@ This build does not predict exercises or count repetitions automatically. Enter 
 - SwiftUI Watch recording, exercise selection, machine variant, actual reps and weight entry.
 - HealthKit strength-training workout lifecycle and Core Motion capture targeting 50 Hz.
 - Raw acceleration, angular velocity, gravity, attitude quaternion and monotonic timestamps.
-- Disk-streamed recording files, local recording summaries and interrupted-draft recovery.
+- Disk-streamed raw recording files, SQLite metadata/reviews/transfer state, and interruption recovery.
 - Queued WatchConnectivity file transfer, UUID deduplication, explicit iPhone acknowledgement and retry.
 - iPhone recording list, detail, motion waveform, sampling diagnostics, correction history and JSON sharing.
 - Shared Codable schema, Python validation, automated tests and separate simulator build scripts.

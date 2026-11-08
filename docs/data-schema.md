@@ -2,7 +2,7 @@
 
 LIFTR exports one UTF-8 JSON file per recording, named `<UUID>.liftr.json`. The top-level fields are `metadata`, `samples`, and `annotations`. Swift `RecordingJSON` uses ISO 8601 dates. Optional Swift values may be absent rather than JSON null. The source of truth is `packages/LIFTRCore/Sources/Models.swift`.
 
-Raw recording files are separate from the small metadata summaries used for listing recordings. Do not train from `.metadata.json` files. Do not commit raw recordings, exports or health data.
+Raw recording files remain separate from structured metadata, review history and transfer acknowledgements in the local `recording-index.sqlite` database. Only `*.liftr.json` files are training/export inputs. Do not commit raw recordings, exports or health data.
 
 ## Metadata
 
@@ -54,7 +54,7 @@ Optional rep boundaries are precise manual annotations only when explicitly supp
 
 ## iPhone review exports
 
-The iPhone keeps received raw recording files unchanged. Review history lives in a separate local `reviews.json` file. An export with reviews includes:
+The iPhone keeps received raw recording files unchanged. Review history lives in SQLite and follows submission order, even when the wall clock changes. Earlier JSON metadata, `reviews.json` and transfer-acknowledgement files migrate transactionally on open; successful migrations remove the legacy copies only after commit. Failed migrations retain their sources and show a warning. An export with reviews includes:
 
 - `metadata` with the latest exercise, actual reps and weight.
 - `annotations` with the latest labels applied to the single set when it has one set annotation.
@@ -68,11 +68,17 @@ The recording UUID and sensor samples stay unchanged. Continuous-session annotat
 Run these commands from the repository root with Python 3.13.
 
 ```sh
-python3 ml/validation/validate_recording.py /path/to/recording.liftr.json
-python3 ml/validation/validate_recording.py /path/to/export-directory --json
-python3 -m unittest discover -s tests/python -v
+python3.13 ml/validation/validate_recording.py /path/to/recording.liftr.json
+python3.13 ml/validation/validate_recording.py /path/to/export-directory --json
+python3.13 -m unittest discover -s tests/python -v
 ```
 
 The validator exits with `0` for valid files, `1` for invalid files, and `2` for invalid CLI usage. It checks metadata, versions, stable exercise IDs, units, finite channels, monotonic time, annotation alignment and review consistency. It reports actual sample rate and sampling gaps. A gap is a warning, since rejecting all imperfect captures would hide data-quality problems. A passing schema check does not prove exercise labels or repetitions are accurate.
 
 Directory validation selects `*.liftr.json`, excluding metadata summaries. There are no Python package dependencies for validation. Real data inspection, resampling and model training are later work.
+
+## Local recovery and deletion
+
+Raw-file deletion is staged alongside a SQLite transaction. On reopening, an uncommitted deletion restores the raw file; a committed deletion finishes its cleanup. Database locks or a staging failure retain the raw file and review history for retry. Unsupported future database versions are refused without downgrading them.
+
+If SQLite explicitly reports a corrupt/non-database index, LIFTR preserves the database and its journal companions in `Index-Recovery-<UUID>` before rebuilding metadata from raw files. A visible warning explains that reviews and transfer acknowledgements may require recovery. These recovery files are private and can retain old labels; keep them local and include them when requesting storage recovery. Other database errors do not trigger a reset.

@@ -29,3 +29,11 @@ __pycache__/
 *.annotations.json
 reviews.json
 reviews-recovery-*.json
+
+# Private structured app databases
+*.sqlite
+*.sqlite-*
+
+# Private staged deletion files
+*.liftr-deleting
+*.metadata-deleting

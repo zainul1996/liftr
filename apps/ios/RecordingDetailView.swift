@@ -144,7 +144,7 @@ struct RecordingDetailView: View {
     .sheet(item: $share) { NativeShareSheet(urls: $0.urls) }
     .sheet(isPresented: $showEditor) {
       ReviewRecordingView(metadata: metadata) { exerciseID, reps, weight in
-        try library.saveReview(
+        try await library.saveReview(
           for: original.id, exerciseID: exerciseID, reps: reps, weightKG: weight)
       }
     }
@@ -198,14 +198,15 @@ struct RecordingDetailView: View {
 
 private struct ReviewRecordingView: View {
   let metadata: RecordingMetadata
-  let save: (String, Int, Double?) throws -> Void
+  let save: (String, Int, Double?) async throws -> Void
   @Environment(\.dismiss) private var dismiss
   @State private var exerciseID: String
   @State private var reps: String
   @State private var weight: String
   @State private var errorMessage: String?
+  @State private var isSaving = false
 
-  init(metadata: RecordingMetadata, save: @escaping (String, Int, Double?) throws -> Void) {
+  init(metadata: RecordingMetadata, save: @escaping (String, Int, Double?) async throws -> Void) {
     self.metadata = metadata
     self.save = save
     _exerciseID = State(initialValue: metadata.exerciseID ?? ExerciseLibrary.all[0].id)
@@ -242,15 +243,22 @@ private struct ReviewRecordingView: View {
       .navigationTitle("Review set")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel") { dismiss() }.disabled(isSaving)
+        }
         ToolbarItem(placement: .confirmationAction) {
           Button("Save") {
             guard valid, let count = Int(reps) else { return }
-            do {
-              try save(exerciseID, count, weight.isEmpty ? nil : parsedWeight)
-              dismiss()
-            } catch { errorMessage = error.localizedDescription }
-          }.disabled(!valid).accessibilityIdentifier("review.save")
+            isSaving = true
+            let submittedWeight = weight.isEmpty ? nil : parsedWeight
+            Task {
+              defer { isSaving = false }
+              do {
+                try await save(exerciseID, count, submittedWeight)
+                dismiss()
+              } catch { errorMessage = error.localizedDescription }
+            }
+          }.disabled(!valid || isSaving).accessibilityIdentifier("review.save")
         }
       }
     }.tint(.liftrLime)
