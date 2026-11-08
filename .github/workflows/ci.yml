@@ -62,6 +62,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Install Watch simulator runtime when absent on hosted runner
+        if: matrix.platform == 'watch'
+        run: xcodebuild -downloadPlatform watchOS
       - name: Native simulator UI tests with explicit synthetic fixtures
         env:
           LIFTR_PYTHON: python

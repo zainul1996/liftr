@@ -23,10 +23,10 @@ final class LIFTRWatchUITests: XCTestCase {
   private func reveal(_ element: XCUIElement, app: XCUIApplication) {
     for _ in 0..<12 {
       if element.isHittable { return }
-      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.76))
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.65))
         .press(
           forDuration: 0.05,
-          thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.52)))
+          thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)))
     }
     XCTAssertTrue(element.isHittable, app.debugDescription)
   }
@@ -49,7 +49,7 @@ final class LIFTRWatchUITests: XCTestCase {
       app.buttons["watch.endSet"].isHittable, "End Set must be visible without scrolling")
     app.buttons["watch.endSet"].tap()
     XCTAssertTrue(app.staticTexts["Save set"].waitForExistence(timeout: 5))
-    print(app.debugDescription)
+    XCTAssertTrue(app.buttons["watch.save"].isHittable, "Save must stay visible while reviewing")
     capture("Synthetic rep and weight entry", app: app)
     let reps = app.staticTexts["watch.reps"]
     XCTAssertTrue(reps.exists, app.debugDescription)

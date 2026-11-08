@@ -35,6 +35,11 @@ struct RecordingHomeView: View {
         }
         .padding(.horizontal, 4)
       }
+      .safeAreaInset(edge: .bottom, spacing: 0) {
+        if controller.phase == .review {
+          saveSetButton.padding(.horizontal, 4).padding(.top, 4).background(.thinMaterial)
+        }
+      }
       .navigationTitle("LIFTR")
       .navigationBarTitleDisplayMode(.inline)
       .sheet(isPresented: $showingExercises) { exercises }
@@ -193,16 +198,18 @@ struct RecordingHomeView: View {
         )
         .font(.caption2).foregroundStyle(.orange)
       }
-      Button("Save Set") { Task { await controller.saveSet() } }.accessibilityIdentifier(
-        "watch.save"
-      )
-      .buttonStyle(.borderedProminent).foregroundStyle(.black)
-      .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
       Button(
         controller.isContinuousRecording ? "Leave interval unlabelled" : "Keep unfinished draft"
       ) { confirmPreserve = true }
       .font(.caption2).tint(.gray).disabled(controller.labelsLockedForSaveRetry)
     }
+  }
+
+  private var saveSetButton: some View {
+    Button("Save Set") { Task { await controller.saveSet() } }
+      .accessibilityIdentifier("watch.save")
+      .buttonStyle(.borderedProminent).foregroundStyle(.black)
+      .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
   }
 
   private var exercises: some View {
