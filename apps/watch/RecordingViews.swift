@@ -35,12 +35,6 @@ struct RecordingHomeView: View {
         }
         .padding(.horizontal, 4)
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity)
-      .safeAreaInset(edge: .bottom, spacing: 0) {
-        if controller.phase == .review {
-          saveSetButton.padding(.horizontal, 4).padding(.top, 4).background(.thinMaterial)
-        }
-      }
       .navigationTitle("LIFTR")
       .navigationBarTitleDisplayMode(.inline)
       .sheet(isPresented: $showingExercises) { exercises }
@@ -199,6 +193,7 @@ struct RecordingHomeView: View {
         )
         .font(.caption2).foregroundStyle(.orange)
       }
+      saveSetButton
       Button(
         controller.isContinuousRecording ? "Leave interval unlabelled" : "Keep unfinished draft"
       ) { confirmPreserve = true }

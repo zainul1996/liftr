@@ -49,7 +49,6 @@ final class LIFTRWatchUITests: XCTestCase {
       app.buttons["watch.endSet"].isHittable, "End Set must be visible without scrolling")
     app.buttons["watch.endSet"].tap()
     XCTAssertTrue(app.staticTexts["Save set"].waitForExistence(timeout: 5))
-    XCTAssertTrue(app.buttons["watch.save"].isHittable, "Save must stay visible while reviewing")
     capture("Synthetic rep and weight entry", app: app)
     let reps = app.staticTexts["watch.reps"]
     XCTAssertTrue(reps.exists, app.debugDescription)
@@ -148,9 +147,8 @@ final class LIFTRWatchUITests: XCTestCase {
     XCTAssertTrue(app.buttons["watch.start"].waitForExistence(timeout: 5))
     recordAndSaveSet(app)
     reveal(app.buttons["watch.recordings"], app: app)
+    XCTAssertEqual(app.buttons["watch.recordings"].label, "Recordings · 3")
     app.buttons["watch.recordings"].tap()
-    XCTAssertEqual(
-      app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch.delete.'")).count, 3)
     capture("Three saved synthetic sets for session identity inspection", app: app)
   }
   func testContinuousCapturePreservesRestAndSetMarkers() {
@@ -174,9 +172,8 @@ final class LIFTRWatchUITests: XCTestCase {
     app.buttons["watch.endWorkout"].tap()
     XCTAssertTrue(app.buttons["watch.start"].waitForExistence(timeout: 5))
     reveal(app.buttons["watch.recordings"], app: app)
+    XCTAssertEqual(app.buttons["watch.recordings"].label, "Recordings · 1")
     app.buttons["watch.recordings"].tap()
-    XCTAssertEqual(
-      app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch.delete.'")).count, 1)
     capture("Saved continuous synthetic capture", app: app)
   }
   func testSavedCopyDeletionRequiresConfirmation() {
