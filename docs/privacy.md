@@ -4,7 +4,7 @@ LIFTR has no account service, backend, analytics SDK or cloud inference. Raw mot
 
 The Watch records motion channels, recording labels, timestamps, a participant pseudonym, a session UUID, wrist, Watch model and watchOS version. Workout access supports the HealthKit workout lifecycle. The initial recording dataset does not need Apple Account identifiers, precise location, contacts or HealthKit exports.
 
-WatchConnectivity transfers recording files to the paired iPhone. The apps store raw recordings separately from metadata summaries and phone review history. Export happens only through your chosen share-sheet destination. Choosing iCloud Drive, another cloud folder or a messaging app sends data there under that service's rules. Platform backups may also include local app data, depending on system settings.
+WatchConnectivity transfers recording files to the paired iPhone. The apps store raw recordings separately from SQLite metadata, transfer state and phone review history. Export happens only through your chosen share-sheet destination. Choosing iCloud Drive, another cloud folder or a messaging app sends data there under that service's rules. Platform backups may also include local app data, depending on system settings.
 
 The app generates a persistent pseudonymous participant UUID. Do not commit raw datasets, exports, HealthKit exports, signing material or credentials. The repository's ignore rules reduce accidental inclusion but do not replace reviewing staged files.
 
@@ -15,3 +15,5 @@ There is no automatic retention period in this build. Review storage regularly, 
 Before TestFlight or App Store distribution, review actual data flows, retention controls, HealthKit usage, permission explanations and Apple's current privacy requirements. These notes describe the development build and are not an App Store privacy submission.
 
 HealthKit workout records, if saved, are managed separately through Apple Health. No health data is sent to a LIFTR server.
+
+A corrupt SQLite index is preserved with its journal companions in an `Index-Recovery-<UUID>` directory before metadata is rebuilt from raw files. The app reports this explicitly. Such recovery copies can retain old review data and are separate from active recording deletion; preserve them only while resolving storage recovery. Ordinary database locks, storage errors and unsupported schema versions do not trigger this reset.
