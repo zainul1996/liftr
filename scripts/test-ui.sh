@@ -57,15 +57,15 @@ if xcodebuild -project LIFTR.xcodeproj -scheme "$LIFTR_UI_SCHEME" \
   exit 0
 else
   LIFTR_UI_TEST_STATUS=$?
-  "${LIFTR_PYTHON:-python3.13}" - "$LIFTR_UI_UDID" "$LIFTR_UI_PLATFORM" <<'PYDIAG'
+  "${LIFTR_PYTHON:-python3.13}" - "$LIFTR_UI_UDID" "$LIFTR_UI_PLATFORM" <<'PYDIAG' || true
 import subprocess,sys
 bundles=("com.zainul.liftr.watchkitapp","com.zainul.liftr.watch-uitests.xctrunner") if sys.argv[2]=="watch" else ("com.zainul.liftr","com.zainul.liftr.phone-uitests.xctrunner")
 for bundle in bundles:
     try:
         result=subprocess.run(["xcrun","simctl","get_app_container",sys.argv[1],bundle,"app"],capture_output=True,text=True,timeout=10)
-        print(bundle+": "+("registered" if result.returncode==0 else "not registered"))
+        print(bundle+": "+("app container found" if result.returncode==0 else "app container unavailable"))
     except subprocess.TimeoutExpired:
-        print(bundle+": registration check timed out")
+        print(bundle+": app-container lookup timed out")
 PYDIAG
   exit "$LIFTR_UI_TEST_STATUS"
 fi
