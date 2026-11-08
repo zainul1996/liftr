@@ -21,13 +21,12 @@ final class LIFTRWatchUITests: XCTestCase {
     add(image)
   }
   private func reveal(_ element: XCUIElement, app: XCUIApplication) {
-    for _ in 0..<30 {
+    for _ in 0..<12 {
       if element.isHittable { return }
-      if #available(watchOS 26.0, *) {
-        XCUIDevice.shared.rotateDigitalCrown(delta: -0.1)
-      } else {
-        app.swipeUp()
-      }
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.76))
+        .press(
+          forDuration: 0.05,
+          thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.52)))
     }
     XCTAssertTrue(element.isHittable, app.debugDescription)
   }
@@ -120,11 +119,10 @@ final class LIFTRWatchUITests: XCTestCase {
   private func backToTop(_ app: XCUIApplication) {
     for _ in 0..<12 {
       if app.buttons["watch.start"].isHittable { return }
-      if #available(watchOS 26.0, *) {
-        XCUIDevice.shared.rotateDigitalCrown(delta: 0.2)
-      } else {
-        app.swipeDown()
-      }
+      app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4))
+        .press(
+          forDuration: 0.05,
+          thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.72)))
     }
   }
   private func recordAndSaveSet(_ app: XCUIApplication) {
