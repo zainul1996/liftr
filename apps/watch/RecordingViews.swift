@@ -67,13 +67,6 @@ struct RecordingHomeView: View {
 
   private var ready: some View {
     VStack(spacing: 12) {
-      if controller.phase == .rest, let date = controller.restStartedAt {
-        HStack {
-          Text("REST").foregroundStyle(.secondary)
-          Spacer()
-          Text(date, style: .timer).monospacedDigit().foregroundStyle(.green)
-        }.font(.caption)
-      }
       Button {
         showingExercises = true
       } label: {
@@ -95,6 +88,13 @@ struct RecordingHomeView: View {
       .buttonStyle(.borderedProminent).accessibilityIdentifier("watch.start")
       .foregroundStyle(.black)
       .disabled(controller.continuousCaptureStopped && controller.isContinuousRecording)
+      if controller.phase == .rest, let date = controller.restStartedAt {
+        HStack {
+          Text("REST").foregroundStyle(.secondary)
+          Spacer()
+          Text(date, style: .timer).monospacedDigit().foregroundStyle(.green)
+        }.font(.caption)
+      }
       if !controller.workout.isActive && !controller.isContinuousRecording {
         Toggle("Record rest too", isOn: $controller.continuousMode).accessibilityIdentifier(
           "watch.continuous"
