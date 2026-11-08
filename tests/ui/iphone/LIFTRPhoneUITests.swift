@@ -67,8 +67,7 @@ final class LIFTRPhoneUITests: XCTestCase {
     reveal(export, app: app)
     export.tap()
     XCTAssertTrue(
-      app.otherElements["recording.shareSheet"].waitForExistence(timeout: 5)
-        || app.buttons["Copy"].waitForExistence(timeout: 3), app.debugDescription)
+      app.otherElements["ActivityListView"].waitForExistence(timeout: 5), app.debugDescription)
   }
   func testDeleteCancellationKeepsRecordingThenDeleteRemovesIt() {
     let app = launch()
@@ -76,11 +75,11 @@ final class LIFTRPhoneUITests: XCTestCase {
     let delete = app.buttons["recording.delete"]
     reveal(delete, app: app)
     delete.tap()
-    XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 3))
-    app.buttons["Cancel"].tap()
+    XCTAssertTrue(app.sheets.firstMatch.waitForExistence(timeout: 3))
+    app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.85)).tap()
     XCTAssertTrue(app.buttons["recording.delete"].exists)
     delete.tap()
-    app.buttons["recording.confirmDelete"].tap()
+    app.buttons["recording.confirmDelete"].firstMatch.tap()
     XCTAssertTrue(
       app.staticTexts["Ready for your first set"].waitForExistence(timeout: 5), app.debugDescription
     )
@@ -101,5 +100,40 @@ final class LIFTRPhoneUITests: XCTestCase {
     XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5), app.debugDescription)
     app.alerts.buttons["OK"].tap()
     XCTAssertTrue(app.buttons["recording.delete"].exists)
+  }
+
+  func testReviewedExportCacheIsDeletedWithLocalRecording() {
+    let app = launch()
+    openFixture(app)
+    let review = app.buttons["recording.review"]
+    reveal(review, app: app)
+    review.tap()
+    replace(app.textFields["review.reps"], with: "12")
+    app.buttons["review.save"].tap()
+    let export = app.buttons["recording.export"]
+    reveal(export, app: app)
+    export.tap()
+    XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5))
+    app.buttons["header.closeButton"].tap()
+    let delete = app.buttons["recording.delete"]
+    reveal(delete, app: app)
+    delete.tap()
+    app.buttons["recording.confirmDelete"].firstMatch.tap()
+    XCTAssertTrue(app.staticTexts["Ready for your first set"].waitForExistence(timeout: 5))
+    capture("Reviewed export deleted locally", app: app)
+  }
+  func testReviewCleanupFailureReportsPartialSuccessWithoutStaleRow() {
+    let app = launch(extra: ["LIFTR_UI_TEST_REVIEW_FAILURE": "1"])
+    if app.alerts.firstMatch.waitForExistence(timeout: 3) { app.alerts.buttons["OK"].tap() }
+    openFixture(app)
+    let delete = app.buttons["recording.delete"]
+    reveal(delete, app: app)
+    delete.tap()
+    app.buttons["recording.confirmDelete"].firstMatch.tap()
+    XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
+    app.alerts.buttons["OK"].tap()
+    XCTAssertTrue(
+      app.staticTexts["Ready for your first set"].waitForExistence(timeout: 5), app.debugDescription
+    )
   }
 }

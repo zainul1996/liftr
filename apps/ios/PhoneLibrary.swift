@@ -125,35 +125,41 @@ final class PhoneLibrary: ObservableObject {
     reviews = next
   }
 
-  func deleteFromPhone(_ id: UUID) async {
-    guard let store else { return }
-    do {
-      try await store.delete(id: id)
-      let cachedExport = FileManager.default.temporaryDirectory.appendingPathComponent(
-        "LIFTR-Exports", isDirectory: true
-      ).appendingPathComponent(id.uuidString + ".liftr.json")
-      if FileManager.default.fileExists(atPath: cachedExport.path) {
-        try FileManager.default.removeItem(at: cachedExport)
-      }
-      var next = reviews
-      next.removeValue(forKey: id.uuidString)
-      if let reviewsURL {
-        try RecordingJSON.encoder().encode(next).write(to: reviewsURL, options: .atomic)
-      }
-      reviews = next
+  @discardableResult func deleteFromPhone(_ id: UUID) async -> Bool {
+    guard let store else { return false }
+    do { try await store.delete(id: id) } catch {
       await refresh()
-    } catch {
-      await refresh()
-      errorMessage =
-        "Local deletion could not complete every cleanup step: \(error.localizedDescription)"
+      errorMessage = "Local recording deletion could not complete: \(error.localizedDescription)"
+      return !recordings.contains { $0.id == id }
     }
+    var cleanupFailures: [String] = []
+    let cachedExport = RecordingStore.exportDirectory().appendingPathComponent(
+      id.uuidString + ".liftr.json")
+    if FileManager.default.fileExists(atPath: cachedExport.path) {
+      do { try FileManager.default.removeItem(at: cachedExport) } catch {
+        cleanupFailures.append("cached export")
+      }
+    }
+    var next = reviews
+    next.removeValue(forKey: id.uuidString)
+    reviews = next
+    if let reviewsURL {
+      do { try RecordingJSON.encoder().encode(next).write(to: reviewsURL, options: .atomic) } catch
+      { cleanupFailures.append("review history") }
+    }
+    await refresh()
+    if !cleanupFailures.isEmpty {
+      errorMessage =
+        "Recording deleted. Cleanup still needs attention for "
+        + cleanupFailures.joined(separator: " and ") + "."
+    }
+    return true
   }
 
   /// Share original files directly. Only reviewed sets require a separate export copy.
   func exportURLs(for ids: [UUID]) async throws -> [URL] {
     guard let store else { throw LibraryError.unavailable }
-    let exportDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(
-      "LIFTR-Exports", isDirectory: true)
+    let exportDirectory = RecordingStore.exportDirectory()
     try FileManager.default.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
     var urls: [URL] = []
     for id in ids {

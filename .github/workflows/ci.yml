@@ -19,7 +19,12 @@ jobs:
           xcode-version: '26.2'
       - name: Set toolchain for scripts
         run: echo "DEVELOPER_DIR=$(xcode-select -p)" >> "$GITHUB_ENV"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - name: Swift and schema tests
+        env:
+          LIFTR_PYTHON: python
         run: ./scripts/test.sh
       - name: Swift formatting
         run: xcrun swift-format lint --strict --recursive packages apps tests/swift

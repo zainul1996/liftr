@@ -11,7 +11,26 @@ public actor RecordingStore {
   public static func defaultDirectory() throws -> URL {
     let base = try FileManager.default.url(
       for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+    #if DEBUG && targetEnvironment(simulator)
+      if ProcessInfo.processInfo.arguments.contains("--liftr-ui-testing"),
+        ProcessInfo.processInfo.environment["LIFTR_UI_TESTING"] == "1"
+      {
+        return base.appendingPathComponent("LIFTR-UI-Tests/Recordings", isDirectory: true)
+      }
+    #endif
     return base.appendingPathComponent("LIFTR/Recordings", isDirectory: true)
+  }
+  public static func exportDirectory() -> URL {
+    #if DEBUG && targetEnvironment(simulator)
+      if ProcessInfo.processInfo.arguments.contains("--liftr-ui-testing"),
+        ProcessInfo.processInfo.environment["LIFTR_UI_TESTING"] == "1"
+      {
+        return FileManager.default.temporaryDirectory.appendingPathComponent(
+          "LIFTR-UI-Tests-Exports", isDirectory: true)
+      }
+    #endif
+    return FileManager.default.temporaryDirectory.appendingPathComponent(
+      "LIFTR-Exports", isDirectory: true)
   }
   public func save(_ recording: Recording) throws -> URL {
     try validate(metadata: recording.metadata)

@@ -36,12 +36,12 @@ The leg machine names are provisional. Display names and equipment variants may 
 
 ## Development prerequisites
 
-Use a Mac with full Xcode and compatible iOS/watchOS SDKs. The project targets iOS 17 and watchOS 10 or later, uses Swift 6, and was initially compiled using Xcode 26.4.1. CI selects Xcode 26.2 on a macOS runner. XcodeGen 2.44 or later regenerates the checked-in project. Python 3.10 or later runs the standard-library validator without third-party packages.
+Use a Mac with full Xcode and compatible iOS/watchOS SDKs. The project targets iOS 17 and watchOS 10 or later, uses Swift 6, and was initially compiled using Xcode 26.4.1. CI selects Xcode 26.2 on a macOS runner. XcodeGen 2.44 or later regenerates the checked-in project. Python 3.13 runs the standard-library validator without third-party packages.
 
 Install Xcode from Apple, open it once and install the SDK components you need. If Homebrew is available, install the project generator:
 
 ```sh
-brew install xcodegen
+brew install xcodegen python@3.13 gh
 ```
 
 The scripts use `/Applications/Xcode.app/Contents/Developer` by default. Set `DEVELOPER_DIR` explicitly if Xcode is installed elsewhere. They do not change the Mac's global developer-directory setting.
@@ -123,7 +123,7 @@ Delete Watch copy in the Watch recordings list removes that saved source file af
 No Python dependencies are needed for Run 1 validation. The optional environment remains isolated from the system Python:
 
 ```sh
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r ml/requirements-validation.txt
 python ml/validation/validate_recording.py /path/to/exported-file.liftr.json --json

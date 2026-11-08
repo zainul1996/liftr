@@ -23,3 +23,9 @@ __pycache__/
 *.provisionprofile
 .env
 .env.*
+
+# Private labels and review history copied from app storage
+*.metadata.json
+*.annotations.json
+reviews.json
+reviews-recovery-*.json

@@ -6,7 +6,7 @@ This build collects labelled Apple Watch motion. It does not recognise exercises
 
 1. Install the apps on your paired iPhone and Apple Watch using [device setup](device-testing.md).
 2. Open LIFTR on both devices once. Grant the Watch permissions requested when beginning a workout.
-3. Choose a participant pseudonym and verify the wrist setting if the Watch settings screen offers them. Use the same pseudonym across your own sessions.
+3. The Watch creates a persistent participant UUID automatically and reads the configured wrist from watchOS. Reinstalling the app can change that UUID; keep this in mind when grouping sessions.
 4. Make a short test recording. Check it appears on the iPhone, then export and validate it before collecting a whole workout.
 
 Do not record another person without their agreement. Raw motion and workout labels can reveal personal habits.
@@ -14,7 +14,7 @@ Do not record another person without their agreement. Raw motion and workout lab
 ## Recording a set
 
 1. Select the exact exercise on the Watch before starting the set.
-2. Start the workout session when prompted, then tap **Start Set**.
+2. Tap **Start Workout** for the first set. Individual-set mode immediately starts recording. During rest, tap **Start Set** for each later set.
 3. Wait until the Watch shows recording has started, then perform your set normally.
 4. Tap **End Set** after the last repetition.
 5. Enter actual reps and weight in kilograms. If you are unsure, do not invent a number.

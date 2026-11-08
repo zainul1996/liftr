@@ -153,8 +153,7 @@ struct RecordingDetailView: View {
     ) {
       Button("Delete from iPhone", role: .destructive) {
         Task {
-          await library.deleteFromPhone(original.id)
-          if library.errorMessage == nil { dismiss() }
+          if await library.deleteFromPhone(original.id) { dismiss() }
         }
       }.accessibilityIdentifier("recording.confirmDelete")
       Button("Cancel", role: .cancel) {}.accessibilityIdentifier("recording.cancelDelete")

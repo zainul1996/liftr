@@ -87,7 +87,9 @@ struct RecordingHomeView: View {
       .foregroundStyle(.black)
       .disabled(controller.continuousCaptureStopped && controller.isContinuousRecording)
       if !controller.workout.isActive && !controller.isContinuousRecording {
-        Toggle("Record rest too", isOn: $controller.continuousMode).font(.caption)
+        Toggle("Record rest too", isOn: $controller.continuousMode).accessibilityIdentifier(
+          "watch.continuous"
+        ).font(.caption)
         if controller.continuousMode {
           Text(
             "Continuous raw capture includes rest and transitions. Mark each set. Battery use needs device testing."
@@ -108,14 +110,17 @@ struct RecordingHomeView: View {
       Text("Data collection mode").font(.caption2).foregroundStyle(.secondary)
       if controller.workout.isActive || controller.isContinuousRecording {
         Button("End Workout") { Task { await controller.finishWorkout() } }.tint(.gray)
+          .accessibilityIdentifier("watch.endWorkout")
       }
       Button("Recordings · \(controller.recentRecordings.count)") { showingRecordings = true }
+        .accessibilityIdentifier("watch.recordings")
         .font(.caption)
       SyncStatusView(transfer: controller.transfer)
       if controller.pendingDraftCount > 0 {
         Text("\(controller.pendingDraftCount) unfinished recording(s) retained on Watch.")
           .font(.caption2).foregroundStyle(.orange)
         Button("Recover recordings") { Task { await controller.recoverDrafts() } }
+          .accessibilityIdentifier("watch.recover")
           .font(.caption2).disabled(controller.isContinuousRecording)
       }
     }
@@ -136,7 +141,7 @@ struct RecordingHomeView: View {
         Text("\(measured, specifier: "%.1f") Hz measured").font(.caption2).foregroundStyle(
           .secondary)
       }
-      Button("End Set") { controller.endSet() }
+      Button("End Set") { controller.endSet() }.accessibilityIdentifier("watch.endSet")
         .buttonStyle(.borderedProminent).tint(.red)
       Text("Finish the movement, then tap End Set.").font(.caption2).foregroundStyle(.secondary)
     }
@@ -152,14 +157,14 @@ struct RecordingHomeView: View {
           Text(controller.actualReps == 0 ? "Enter reps" : "\(controller.actualReps)").font(.title3)
         }
       }
-      .disabled(controller.labelsLockedForSaveRetry)
+      .disabled(controller.labelsLockedForSaveRetry).accessibilityIdentifier("watch.reps")
       Stepper(value: $controller.weightKG, in: 0...500, step: 0.5) {
         VStack(alignment: .leading) {
           Text("Weight · kg").font(.caption2).foregroundStyle(.secondary)
           Text(controller.weightKG, format: .number.precision(.fractionLength(0...1))).font(.title3)
         }
       }
-      .disabled(controller.labelsLockedForSaveRetry)
+      .disabled(controller.labelsLockedForSaveRetry).accessibilityIdentifier("watch.weight")
       if controller.labelsLockedForSaveRetry {
         Text(
           "Labels are finalized. Retry saving this file, then correct labels on iPhone if needed."
@@ -172,9 +177,11 @@ struct RecordingHomeView: View {
         )
         .font(.caption2).foregroundStyle(.orange)
       }
-      Button("Save Set") { Task { await controller.saveSet() } }
-        .buttonStyle(.borderedProminent).foregroundStyle(.black)
-        .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
+      Button("Save Set") { Task { await controller.saveSet() } }.accessibilityIdentifier(
+        "watch.save"
+      )
+      .buttonStyle(.borderedProminent).foregroundStyle(.black)
+      .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
       Button(
         controller.isContinuousRecording ? "Leave interval unlabelled" : "Keep unfinished draft"
       ) { confirmPreserve = true }
@@ -194,7 +201,7 @@ struct RecordingHomeView: View {
             Text(exercise.name)
             Text(exercise.equipment).font(.caption2).foregroundStyle(.secondary)
           }
-        }
+        }.accessibilityIdentifier("exercise." + exercise.id)
       }
       .navigationTitle("Exercise")
     }
@@ -218,6 +225,7 @@ struct RecordingHomeView: View {
               Text("Interrupted").font(.caption2).foregroundStyle(.orange)
             }
             Button("Delete Watch copy", role: .destructive) { recordingToDelete = metadata }
+              .accessibilityIdentifier("watch.delete." + metadata.id.uuidString)
               .font(.caption2)
           }
         }

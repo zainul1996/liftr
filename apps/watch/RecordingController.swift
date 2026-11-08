@@ -49,8 +49,21 @@ final class RecordingController: ObservableObject {
     transfer = RecordingTransfer(store: store)
     draftDirectory = directory.deletingLastPathComponent().appendingPathComponent(
       "Drafts", isDirectory: true)
-    recorder.onUpdate = { [weak self] quality in Task { @MainActor in self?.quality = quality } }
-    recorder.onFailure = { [weak self] message in Task { @MainActor in self?.interrupt(message) } }
+    recorder.onUpdate = { [weak self] recordingID, quality in
+      Task { @MainActor in
+        guard let self, self.metadata?.id == recordingID,
+          self.phase == .recording || (self.phase == .rest && self.isContinuousRecording),
+          quality.sampleCount >= self.quality.sampleCount
+        else { return }
+        self.quality = quality
+      }
+    }
+    recorder.onFailure = { [weak self] recordingID, message in
+      Task { @MainActor in
+        guard self?.metadata?.id == recordingID else { return }
+        self?.interrupt(message)
+      }
+    }
     workout.onInterruption = { [weak self] message in self?.interrupt(message) }
     transfer.activate()
     Task { await refreshRecordings() }
@@ -82,20 +95,35 @@ final class RecordingController: ObservableObject {
       }
       if workout.isPaused { workout.resume() }
       let device = WKInterfaceDevice.current()
-      let participantID = Self.participantID()
+      var participantID = Self.participantID()
+      #if DEBUG && targetEnvironment(simulator)
+        if SimulatorTestSupport.enabled { participantID = "synthetic-ui-test-never-train" }
+      #endif
       var machine = utsname()
       uname(&machine)
-      let hardware = withUnsafeBytes(of: &machine.machine) {
+      var hardware = withUnsafeBytes(of: &machine.machine) {
         String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self)
       }
+      var recordedOSVersion = device.systemVersion
+      var recordedWrist = device.wristLocation == .left ? "left" : "right"
+      #if DEBUG && targetEnvironment(simulator)
+        if SimulatorTestSupport.enabled {
+          hardware = "synthetic-ui-test"
+          recordedOSVersion = "synthetic-ui-test"
+          recordedWrist = "synthetic"
+        }
+      #endif
       let metadata = RecordingMetadata(
         participantID: participantID, sessionID: sessionID,
         exerciseID: continuousMode ? nil : selectedExercise.id,
         equipment: continuousMode
-          ? nil : (equipmentVariant.isEmpty ? selectedExercise.equipment : equipmentVariant),
+          ? nil
+          : (equipmentVariant.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            ? selectedExercise.equipment
+            : equipmentVariant.trimmingCharacters(in: .whitespacesAndNewlines)),
         weightKG: continuousMode ? nil : weightKG, startedAt: Date(),
-        watchWrist: device.wristLocation == .left ? "left" : "right",
-        watchModel: hardware, watchOSVersion: device.systemVersion,
+        watchWrist: recordedWrist,
+        watchModel: hardware, watchOSVersion: recordedOSVersion,
         mode: continuousMode ? .continuous : .set)
       try recorder.start(directory: draftDirectory, metadata: metadata)
       self.metadata = metadata
@@ -319,7 +347,10 @@ final class RecordingController: ObservableObject {
             "annotations.json"))
         try? FileManager.default.removeItem(at: output)
         recoveredCount += 1
-      } catch { failures += 1 }
+      } catch {
+        try? FileManager.default.removeItem(at: output)
+        failures += 1
+      }
     }
     phase = .rest
     restStartedAt = restStartedAt ?? Date()

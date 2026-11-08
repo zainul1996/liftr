@@ -6,7 +6,7 @@ Use a separate macOS user on the family MacBook. Sign into Xcode with your own A
 
 - A Mac running a version of macOS compatible with the installed Xcode.
 - Xcode with the iOS and watchOS platforms installed. This project currently targets iOS 17 and watchOS 10 or later.
-- XcodeGen 2.44 or later, Git, and Python 3.11 or later.
+- XcodeGen 2.44 or later, Git, and Python 3.13.
 - Your own GitHub account with access to the private `zainul1996/liftr` repository.
 - A paired iPhone and Apple Watch with Developer Mode enabled when Xcode requests it.
 
@@ -17,7 +17,7 @@ Install Xcode from Apple, open it once, accept its licence and let required comp
 ## Clone and generate
 
 ```sh
-git clone git@github.com:zainul1996/liftr.git
+gh repo clone zainul1996/liftr
 cd liftr
 ./scripts/bootstrap.sh
 open LIFTR.xcodeproj
@@ -84,3 +84,9 @@ Continuous-session capture, recovery and long-session battery reliability remain
 ## Later updates
 
 From the repository's stable branch, pull the latest reviewed changes, regenerate with the bootstrap script and run on the same devices again. Do not discard your local signing settings or raw data to resolve a Git conflict. Ask for help and preserve the files first.
+
+## Delivery and acknowledgement checks
+
+WatchConnectivity file transfer and user-info delivery do not work in Simulator. On paired physical devices, record with the phone disconnected, relaunch Watch and verify local persistence, then reconnect. Verify the same UUID imports once, acknowledgement survives Watch relaunch, and Retry does not duplicate it. A failed iPhone import must not acknowledge success; a later retry must recover. Cancelling a queued transfer before Watch deletion cannot erase already delivered phone copies.
+
+References: [file transfer](https://developer.apple.com/documentation/watchconnectivity/wcsession/transferfile(_:metadata:)) and [user-info transfer](https://developer.apple.com/documentation/watchconnectivity/wcsession/transferuserinfo(_:)).

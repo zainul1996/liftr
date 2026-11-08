@@ -1,6 +1,7 @@
 #if DEBUG && targetEnvironment(simulator)
   import Foundation
   import LIFTRCore
+  import LIFTRPersistence
 
   /// Explicit test-only data injection. This code is absent from Release and physical-device builds.
   enum SimulatorTestSupport {
@@ -12,7 +13,8 @@
     static func prepare(directory: URL) throws {
       guard enabled else { return }
       let root = directory.deletingLastPathComponent()
-      guard directory.lastPathComponent == "Recordings", root.lastPathComponent == "LIFTR" else {
+      guard directory.lastPathComponent == "Recordings", root.lastPathComponent == "LIFTR-UI-Tests"
+      else {
         return
       }
       let env = ProcessInfo.processInfo.environment
@@ -20,7 +22,7 @@
         if FileManager.default.fileExists(atPath: root.path) {
           try FileManager.default.removeItem(at: root)
         }
-        let exports = FileManager.default.temporaryDirectory.appendingPathComponent("LIFTR-Exports")
+        let exports = RecordingStore.exportDirectory()
         if FileManager.default.fileExists(atPath: exports.path) {
           try FileManager.default.removeItem(at: exports)
         }
@@ -38,7 +40,22 @@
       }
       if env["LIFTR_UI_TEST_EXPORT_FAILURE"] == "1" {
         try Data("synthetic filesystem collision".utf8).write(
-          to: FileManager.default.temporaryDirectory.appendingPathComponent("LIFTR-Exports"))
+          to: RecordingStore.exportDirectory())
+      }
+      if env["LIFTR_UI_TEST_DRAFT_STORAGE_FAILURE"] == "1" {
+        try Data("synthetic draft path collision".utf8).write(
+          to: root.appendingPathComponent("Drafts"))
+      }
+      if env["LIFTR_UI_TEST_FIXTURE"] == "failed-draft" {
+        let drafts = root.appendingPathComponent("Drafts")
+        try FileManager.default.createDirectory(at: drafts, withIntermediateDirectories: true)
+        let item = recording()
+        try RecordingJSON.encoder().encode(item.metadata).write(
+          to: drafts.appendingPathComponent(item.id.uuidString + ".draft.json"))
+        var prefix = Data("{\"samples\":[\n".utf8)
+        prefix.append(try RecordingJSON.encoder().encode(item.samples[0]))
+        prefix.append(0x0A)
+        try prefix.write(to: drafts.appendingPathComponent(item.id.uuidString + ".partial"))
       }
       if env["LIFTR_UI_TEST_REVIEW_FAILURE"] == "1" {
         try FileManager.default.createDirectory(

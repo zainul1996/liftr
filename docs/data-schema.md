@@ -9,7 +9,7 @@ Raw recording files are separate from the small metadata summaries used for list
 | Field | Meaning |
 | --- | --- |
 | `id` | Stable recording UUID, retained across retries and review exports |
-| `participantID` | User-chosen pseudonym, never an Apple Account identifier |
+| `participantID` | App-generated persistent pseudonymous UUID, never an Apple Account identifier |
 | `sessionID` | Gym recording-session UUID, used for held-out session splits |
 | `exerciseID` | Stable taxonomy ID, optional for continuous or interrupted recordings |
 | `equipment` | Machine/equipment description, kept separately from exercise identity |
@@ -65,7 +65,7 @@ The recording UUID and sensor samples stay unchanged. Continuous-session annotat
 
 ## Validation
 
-Run these commands from the repository root with Python 3.11 or later.
+Run these commands from the repository root with Python 3.13.
 
 ```sh
 python3 ml/validation/validate_recording.py /path/to/recording.liftr.json
