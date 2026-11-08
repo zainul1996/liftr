@@ -26,7 +26,7 @@ Open the recording on iPhone and use its review action. It preserves the raw sou
 
 ## Schema validation fails
 
-Run `python3 ml/validation/validate_recording.py path/to/file.liftr.json --json`. Read the named field. Do not repair timestamps by sorting or inventing samples before preserving the original file. Unknown versions need a compatible validator. A complete set without actual reps is not labelled training data. Invalid JSON may be an interrupted write; preserve it for recovery rather than treating it as a complete set.
+Run `python3.13 ml/validation/validate_recording.py path/to/file.liftr.json --json`. Read the named field. Do not repair timestamps by sorting or inventing samples before preserving the original file. Unknown versions need a compatible validator. A complete set without actual reps is not labelled training data. Invalid JSON may be an interrupted write; preserve it for recovery rather than treating it as a complete set.
 
 ## Sampling gaps or a lower rate appear
 

@@ -6,18 +6,18 @@ Use a separate macOS user on the family MacBook. Sign into Xcode with your own A
 
 - A Mac running a version of macOS compatible with the installed Xcode.
 - Xcode with the iOS and watchOS platforms installed. This project currently targets iOS 17 and watchOS 10 or later.
-- XcodeGen 2.44 or later, Git, and Python 3.11 or later.
+- XcodeGen 2.44 or later, Git, and Python 3.13.
 - Your own GitHub account with access to the private `zainul1996/liftr` repository.
 - A paired iPhone and Apple Watch with Developer Mode enabled when Xcode requests it.
 
 The project was initially generated with Xcode 26.4.1. A compatible simulator build does not verify signing or physical-device behaviour.
 
-Install Xcode from Apple, open it once, accept its licence and let required components install. If you use Homebrew, install XcodeGen with `brew install xcodegen`. Authentication to GitHub and Apple is your action. Never paste credentials into the repository or send them to Codex.
+Install Xcode from Apple, open it once, accept its licence and let required components install. If you use Homebrew, install prerequisites with `brew install xcodegen python@3.13 gh`. Authentication to GitHub and Apple is your action. Never paste credentials into the repository or send them to Codex.
 
 ## Clone and generate
 
 ```sh
-git clone git@github.com:zainul1996/liftr.git
+gh repo clone zainul1996/liftr
 cd liftr
 ./scripts/bootstrap.sh
 open LIFTR.xcodeproj
@@ -74,13 +74,19 @@ Record the result and any failure rather than marking the list passed in advance
 | Close and reopen iPhone app | Received recordings and reviews remain |
 | Retry transfer of an existing set | Stable UUID imports once |
 | Decline a permission | Clear message and no false recording success |
-| Pause or end workout | No unnoticed capture after the intended lifecycle ends |
+| End workout or trigger a system interruption | No unnoticed capture after the intended lifecycle ends |
 | Storage or write failure | Error reported, original/partial data retained when possible |
 | Delete a phone recording | Phone copy disappears, scope of deletion is clear |
 | 60 to 90 minute session | Record actual battery change, thermal issues and delivery delays |
 
-Continuous-session capture, recovery and long-session battery reliability remain gates until the corresponding code and physical tests are complete. Do not use an unfinished feature as the only copy of an important dataset.
+Continuous capture and recovery are implemented and covered with synthetic automated checks. Real-device background capture, interruption recovery and long-session battery reliability remain physical test gates. Do not use an unfinished feature as the only copy of an important dataset.
 
 ## Later updates
 
-From the repository's stable branch, pull the latest reviewed changes, regenerate with the bootstrap script and run on the same devices again. Do not discard your local signing settings or raw data to resolve a Git conflict. Ask for help and preserve the files first.
+From the repository's stable branch, pull the latest reviewed changes, regenerate with the bootstrap script and run on the same devices again. Project regeneration uses `project.yml` and can reset generated signing values; reselect your team in Xcode before physical-device installation. Do not discard your local signing settings or raw data to resolve a Git conflict. Ask for help and preserve the files first.
+
+## Delivery and acknowledgement checks
+
+WatchConnectivity file transfer and user-info delivery do not work in Simulator. On paired physical devices, record with the phone disconnected, relaunch Watch and verify local persistence, then reconnect. Verify the same UUID imports once, acknowledgement survives Watch relaunch, and Retry does not duplicate it. A failed iPhone import must not acknowledge success; a later retry must recover. Cancelling a queued transfer before Watch deletion cannot erase already delivered phone copies.
+
+References: [file transfer](https://developer.apple.com/documentation/watchconnectivity/wcsession/transferfile(_:metadata:)) and [user-info transfer](https://developer.apple.com/documentation/watchconnectivity/wcsession/transferuserinfo(_:)).

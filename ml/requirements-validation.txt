@@ -1,1 +1,1 @@
-# Validation uses Python 3.11+ standard library only. No third-party packages.
+# Validation uses Python 3.13 standard library only. No third-party packages.

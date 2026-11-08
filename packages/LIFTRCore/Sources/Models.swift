@@ -186,3 +186,21 @@ public enum RecordingJSON {
     return d
   }
 }
+
+public struct RecordingReview: Codable, Identifiable, Equatable, Sendable {
+  public var id: UUID
+  public var reviewedAt: Date
+  public var exerciseID: String
+  public var actualReps: Int?
+  public var weightKG: Double?
+  public init(
+    id: UUID = UUID(), reviewedAt: Date = Date(), exerciseID: String, actualReps: Int?,
+    weightKG: Double?
+  ) {
+    self.id = id
+    self.reviewedAt = reviewedAt
+    self.exerciseID = exerciseID
+    self.actualReps = actualReps
+    self.weightKG = weightKG
+  }
+}

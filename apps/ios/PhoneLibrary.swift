@@ -4,14 +4,6 @@ import LIFTRCore
 import LIFTRPersistence
 import LIFTRSync
 
-struct RecordingReview: Codable, Identifiable, Sendable {
-  var id = UUID()
-  var reviewedAt = Date()
-  var exerciseID: String
-  var actualReps: Int?
-  var weightKG: Double?
-}
-
 private struct ReviewedRecordingExport: Encodable {
   var metadata: RecordingMetadata
   var samples: [MotionSample]
@@ -33,34 +25,15 @@ final class PhoneLibrary: ObservableObject {
   private var store: RecordingStore?
   private var transfer: RecordingTransfer?
   private var statusSubscription: AnyCancellable?
-  private var reviewsURL: URL?
 
   init() {
     do {
       let directory = try RecordingStore.defaultDirectory()
+      #if DEBUG && targetEnvironment(simulator)
+        try SimulatorTestSupport.prepare(directory: directory)
+      #endif
       let store = try RecordingStore(directory: directory)
       self.store = store
-      let reviewsURL = directory.deletingLastPathComponent().appendingPathComponent("reviews.json")
-      self.reviewsURL = reviewsURL
-      if FileManager.default.fileExists(atPath: reviewsURL.path) {
-        do {
-          reviews = try RecordingJSON.decoder().decode(
-            [String: [RecordingReview]].self, from: Data(contentsOf: reviewsURL))
-        } catch {
-          // A damaged optional review file must never disable incoming recordings.
-          let recovery = reviewsURL.deletingLastPathComponent().appendingPathComponent(
-            "reviews-recovery-\(UUID().uuidString).json")
-          do {
-            try FileManager.default.copyItem(at: reviewsURL, to: recovery)
-            errorMessage =
-              "Review history could not be read. A recovery copy was preserved. Recording transfers remain available."
-          } catch {
-            self.reviewsURL = nil
-            errorMessage =
-              "Review history could not be read or backed up. Review edits are disabled to preserve it. Recording transfers remain available."
-          }
-        }
-      }
       let transfer = RecordingTransfer(store: store)
       self.transfer = transfer
       statusSubscription = transfer.$status.sink { [weak self] status in self?.syncStatus = status }
@@ -76,7 +49,10 @@ final class PhoneLibrary: ObservableObject {
     isLoading = true
     defer { isLoading = false }
     do {
+      reviews = try await store.loadReviews()
       recordings = try await store.list()
+      let warnings = await store.takePersistenceWarnings()
+      if !warnings.isEmpty { errorMessage = warnings.joined(separator: " ") }
       damagedRecordingCount = await store.damagedRecordingCount
     } catch { errorMessage = "Could not load recordings: \(error.localizedDescription)" }
   }
@@ -109,38 +85,53 @@ final class PhoneLibrary: ObservableObject {
     return metadata
   }
 
-  func saveReview(for id: UUID, exerciseID: String, reps: Int?, weightKG: Double?) throws {
+  func saveReview(for id: UUID, exerciseID: String, reps: Int?, weightKG: Double?) async throws {
     guard ExerciseLibrary.find(id: exerciseID) != nil,
       reps.map({ $0 >= 0 }) ?? true,
       weightKG.map({ $0.isFinite && $0 >= 0 }) ?? true,
-      let reviewsURL
+      let store
     else { throw LibraryError.invalidReview }
-    var next = reviews
-    next[id.uuidString, default: []].append(
-      .init(exerciseID: exerciseID, actualReps: reps, weightKG: weightKG))
-    try RecordingJSON.encoder().encode(next).write(to: reviewsURL, options: .atomic)
-    reviews = next
+    let history = try await store.appendReview(
+      recordingID: id,
+      review: .init(exerciseID: exerciseID, actualReps: reps, weightKG: weightKG))
+    // Independent saves may resume out of order; never replace a newer append result.
+    if history.count >= (reviews[id.uuidString]?.count ?? 0) { reviews[id.uuidString] = history }
   }
 
-  func deleteFromPhone(_ id: UUID) async {
-    guard let store else { return }
-    do {
-      try await store.delete(id: id)
-      var next = reviews
-      next.removeValue(forKey: id.uuidString)
-      if let reviewsURL {
-        try RecordingJSON.encoder().encode(next).write(to: reviewsURL, options: .atomic)
-      }
-      reviews = next
+  @discardableResult func deleteFromPhone(_ id: UUID) async -> Bool {
+    guard let store else { return false }
+    do { try await store.delete(id: id) } catch {
       await refresh()
-    } catch { errorMessage = "Could not delete recording: \(error.localizedDescription)" }
+      errorMessage = "Local recording deletion could not complete: \(error.localizedDescription)"
+      return !recordings.contains { $0.id == id }
+    }
+    var cleanupFailures: [String] = []
+    let cachedExport = RecordingStore.exportDirectory().appendingPathComponent(
+      id.uuidString + ".liftr.json")
+    if FileManager.default.fileExists(atPath: cachedExport.path) {
+      do { try FileManager.default.removeItem(at: cachedExport) } catch {
+        cleanupFailures.append("cached export")
+      }
+    }
+    var next = reviews
+    next.removeValue(forKey: id.uuidString)
+    reviews = next
+    if await store.hasUnresolvedLegacyReviews() {
+      cleanupFailures.append("unreadable legacy review history")
+    }
+    await refresh()
+    if !cleanupFailures.isEmpty {
+      errorMessage =
+        "Recording deleted. Cleanup still needs attention for "
+        + cleanupFailures.joined(separator: " and ") + "."
+    }
+    return true
   }
 
   /// Share original files directly. Only reviewed sets require a separate export copy.
   func exportURLs(for ids: [UUID]) async throws -> [URL] {
     guard let store else { throw LibraryError.unavailable }
-    let exportDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(
-      "LIFTR-Exports", isDirectory: true)
+    let exportDirectory = RecordingStore.exportDirectory()
     try FileManager.default.createDirectory(at: exportDirectory, withIntermediateDirectories: true)
     var urls: [URL] = []
     for id in ids {

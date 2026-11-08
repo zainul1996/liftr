@@ -11,12 +11,12 @@ This build does not predict exercises or count repetitions automatically. Enter 
 - SwiftUI Watch recording, exercise selection, machine variant, actual reps and weight entry.
 - HealthKit strength-training workout lifecycle and Core Motion capture targeting 50 Hz.
 - Raw acceleration, angular velocity, gravity, attitude quaternion and monotonic timestamps.
-- Disk-streamed recording files, local recording summaries and interrupted-draft recovery.
+- Disk-streamed raw recording files, SQLite metadata/reviews/transfer state, and interruption recovery.
 - Queued WatchConnectivity file transfer, UUID deduplication, explicit iPhone acknowledgement and retry.
 - iPhone recording list, detail, motion waveform, sampling diagnostics, correction history and JSON sharing.
 - Shared Codable schema, Python validation, automated tests and separate simulator build scripts.
 
-See the [architecture](docs/architecture.md), [data schema](docs/data-schema.md), [collection guide](docs/data-collection.md) and [device test procedure](docs/device-testing.md).
+See the [Run 1 handoff](docs/run1-handoff.md), [architecture](docs/architecture.md), [data schema](docs/data-schema.md), [collection guide](docs/data-collection.md) and [device test procedure](docs/device-testing.md).
 
 ## Exercise library
 
@@ -36,19 +36,19 @@ The leg machine names are provisional. Display names and equipment variants may 
 
 ## Development prerequisites
 
-Use a Mac with full Xcode and compatible iOS/watchOS SDKs. The project targets iOS 17 and watchOS 10 or later, uses Swift 6, and was initially compiled using Xcode 26.4.1. CI selects Xcode 26.2 on a macOS runner. XcodeGen 2.44 or later regenerates the checked-in project. Python 3.10 or later runs the standard-library validator without third-party packages.
+Use a Mac with full Xcode and compatible iOS/watchOS SDKs. The project targets iOS 17 and watchOS 10 or later, uses Swift 6, and was initially compiled using Xcode 26.4.1. CI tests and simulator builds use Xcode 26.2 on macOS 15; native UI checks use Xcode 26.4.1 on macOS 26 to match the validated local runner. XcodeGen 2.44 or later regenerates the checked-in project. Python 3.13 runs the standard-library validator without third-party packages.
 
 Install Xcode from Apple, open it once and install the SDK components you need. If Homebrew is available, install the project generator:
 
 ```sh
-brew install xcodegen
+brew install xcodegen python@3.13 gh
 ```
 
 The scripts use `/Applications/Xcode.app/Contents/Developer` by default. Set `DEVELOPER_DIR` explicitly if Xcode is installed elsewhere. They do not change the Mac's global developer-directory setting.
 
 ## Personal GitHub setup
 
-The repository is [zainul1996/liftr](https://github.com/zainul1996/liftr), private and owned by a personal account. On the development Mac, sign into that personal GitHub account using GitHub Desktop or GitHub CLI. Never put a token in a clone URL or source file.
+The repository is [zainul1996/liftr](https://github.com/zainul1996/liftr), private and owned by a personal account. On the development Mac, authenticate GitHub CLI to that personal account with `gh auth login` before the commands below. Alternatively, use GitHub Desktop's Clone Repository action. Never put a token in a clone URL or source file.
 
 ```sh
 mkdir -p ~/Documents/personal
@@ -123,7 +123,7 @@ Delete Watch copy in the Watch recordings list removes that saved source file af
 No Python dependencies are needed for Run 1 validation. The optional environment remains isolated from the system Python:
 
 ```sh
-python3 -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r ml/requirements-validation.txt
 python ml/validation/validate_recording.py /path/to/exported-file.liftr.json --json
@@ -169,3 +169,14 @@ Run 3 will use new real-world feedback to improve accuracy, battery, interruptio
 See [privacy.md](docs/privacy.md). Intentional raw motion and workout labels remain local by default. Sharing is user initiated. Raw recordings, private datasets, credentials, certificates, provisioning profiles and build outputs are ignored by Git.
 
 No TestFlight or App Store release workflow exists yet. No paid membership, signing credentials or production service is configured by this repository. Physical sampling, background reliability, paired-device transfer, storage interruption behaviour and battery use need the documented device checks. Report those results separately from code, compilation, unit tests and simulator launches.
+
+## Native simulator UI checks
+
+Use a dedicated simulator; the tests reset only their isolated synthetic test storage.
+
+```sh
+./scripts/test-ui.sh ios
+./scripts/test-ui.sh watch
+```
+
+Add a dedicated simulator UUID as the second argument to target it; otherwise the script selects an available matching simulator. The scripts run native XCUITest and save `.xcresult` bundles under `.build/ui/results`. They do not establish real motion, HealthKit permission or WatchConnectivity delivery performance. The existing-archive upgrade case is a separate QA procedure described in the architecture document.

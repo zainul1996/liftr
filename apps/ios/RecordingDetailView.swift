@@ -88,7 +88,9 @@ struct RecordingDetailView: View {
           }
         }
         Section("Recording quality") {
-          LabeledContent("Samples", value: "\(recording.samples.count)")
+          LabeledContent("Samples", value: "\(recording.samples.count)").accessibilityIdentifier(
+            "quality.samples"
+          ).accessibilityValue("\(recording.samples.count)")
           LabeledContent(
             "Target rate", value: "\(original.sensorConfiguration.targetHz.formatted()) Hz")
           if let observedHz {
@@ -96,7 +98,9 @@ struct RecordingDetailView: View {
               "Observed rate",
               value: "\(observedHz.formatted(.number.precision(.fractionLength(1)))) Hz")
           }
-          LabeledContent("Gaps above 2.5 intervals", value: "\(gaps)")
+          LabeledContent("Gaps above 2.5 intervals", value: "\(gaps)").accessibilityIdentifier(
+            "quality.gaps"
+          ).accessibilityValue("\(gaps)")
           LabeledContent("Set annotations", value: "\(recording.annotations.count)")
           LabeledContent("Capture status", value: original.status.rawValue.capitalized)
           Text(
@@ -109,7 +113,9 @@ struct RecordingDetailView: View {
         LabeledContent("Equipment", value: metadata.equipment ?? "Not entered")
         LabeledContent("Review", value: metadata.labelReviewStatus.rawValue.capitalized)
         LabeledContent("iPhone review history", value: "\(library.reviewCount(for: original.id))")
-        Button("Review exercise, reps and weight") { showEditor = true }.disabled(
+        Button("Review exercise, reps and weight") { showEditor = true }.accessibilityIdentifier(
+          "recording.review"
+        ).disabled(
           original.mode != .set)
         Text(
           "Review keeps the original recording. Exports include your latest labels and the original metadata with correction history."
@@ -127,7 +133,9 @@ struct RecordingDetailView: View {
       }
       Section {
         Button("Export recording", systemImage: "square.and.arrow.up") { Task { await export() } }
+          .accessibilityIdentifier("recording.export")
         Button("Delete from iPhone", role: .destructive) { showDelete = true }
+          .accessibilityIdentifier("recording.delete")
       }
     }
     .navigationTitle("Recording")
@@ -136,7 +144,7 @@ struct RecordingDetailView: View {
     .sheet(item: $share) { NativeShareSheet(urls: $0.urls) }
     .sheet(isPresented: $showEditor) {
       ReviewRecordingView(metadata: metadata) { exerciseID, reps, weight in
-        try library.saveReview(
+        try await library.saveReview(
           for: original.id, exerciseID: exerciseID, reps: reps, weightKG: weight)
       }
     }
@@ -145,10 +153,10 @@ struct RecordingDetailView: View {
     ) {
       Button("Delete from iPhone", role: .destructive) {
         Task {
-          await library.deleteFromPhone(original.id)
-          if library.errorMessage == nil { dismiss() }
+          if await library.deleteFromPhone(original.id) { dismiss() }
         }
-      }
+      }.accessibilityIdentifier("recording.confirmDelete")
+      Button("Cancel", role: .cancel) {}.accessibilityIdentifier("recording.cancelDelete")
     } message: {
       Text(
         "This also removes its iPhone review history. Watch recordings, exported files and backups are separate copies. A later Watch retry may send it again."
@@ -190,14 +198,15 @@ struct RecordingDetailView: View {
 
 private struct ReviewRecordingView: View {
   let metadata: RecordingMetadata
-  let save: (String, Int, Double?) throws -> Void
+  let save: (String, Int, Double?) async throws -> Void
   @Environment(\.dismiss) private var dismiss
   @State private var exerciseID: String
   @State private var reps: String
   @State private var weight: String
   @State private var errorMessage: String?
+  @State private var isSaving = false
 
-  init(metadata: RecordingMetadata, save: @escaping (String, Int, Double?) throws -> Void) {
+  init(metadata: RecordingMetadata, save: @escaping (String, Int, Double?) async throws -> Void) {
     self.metadata = metadata
     self.save = save
     _exerciseID = State(initialValue: metadata.exerciseID ?? ExerciseLibrary.all[0].id)
@@ -217,9 +226,11 @@ private struct ReviewRecordingView: View {
         Section("What did you complete?") {
           Picker("Exercise", selection: $exerciseID) {
             ForEach(ExerciseLibrary.all) { Text($0.name).tag($0.id) }
-          }
+          }.pickerStyle(.menu).accessibilityIdentifier("review.exercise")
           TextField("Actual repetitions", text: $reps).keyboardType(.numberPad)
+            .accessibilityIdentifier("review.reps")
           TextField("Weight in kg, optional", text: $weight).keyboardType(.decimalPad)
+            .accessibilityIdentifier("review.weight")
         }
         Section {
           Text(
@@ -232,15 +243,22 @@ private struct ReviewRecordingView: View {
       .navigationTitle("Review set")
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
-        ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+        ToolbarItem(placement: .cancellationAction) {
+          Button("Cancel") { dismiss() }.disabled(isSaving)
+        }
         ToolbarItem(placement: .confirmationAction) {
           Button("Save") {
             guard valid, let count = Int(reps) else { return }
-            do {
-              try save(exerciseID, count, weight.isEmpty ? nil : parsedWeight)
-              dismiss()
-            } catch { errorMessage = error.localizedDescription }
-          }.disabled(!valid)
+            isSaving = true
+            let submittedWeight = weight.isEmpty ? nil : parsedWeight
+            Task {
+              defer { isSaving = false }
+              do {
+                try await save(exerciseID, count, submittedWeight)
+                dismiss()
+              } catch { errorMessage = error.localizedDescription }
+            }
+          }.disabled(!valid || isSaving).accessibilityIdentifier("review.save")
         }
       }
     }.tint(.liftrLime)

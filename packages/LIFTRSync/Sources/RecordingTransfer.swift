@@ -16,7 +16,19 @@ import LIFTRPersistence
       self.store = store
       super.init()
     }
+    private var isSyntheticUITest: Bool {
+      #if DEBUG && targetEnvironment(simulator)
+        return ProcessInfo.processInfo.arguments.contains("--liftr-ui-testing")
+          && ProcessInfo.processInfo.environment["LIFTR_UI_TESTING"] == "1"
+      #else
+        return false
+      #endif
+    }
     public func activate() {
+      if isSyntheticUITest {
+        status = "Synthetic test transport disabled"
+        return
+      }
       guard WCSession.isSupported() else {
         status = "WatchConnectivity unavailable"
         return
@@ -25,6 +37,10 @@ import LIFTRPersistence
       WCSession.default.activate()
     }
     public func enqueue(fileURL: URL, recordingID: UUID) {
+      if isSyntheticUITest {
+        status = "Synthetic test file saved locally"
+        return
+      }
       #if os(watchOS)
         guard WCSession.default.activationState == .activated else {
           status = "Saved locally. Waiting for connection activation."
@@ -50,6 +66,10 @@ import LIFTRPersistence
       return pending.count
     }
     public func retryPending() async {
+      if isSyntheticUITest {
+        status = "Synthetic test transport disabled"
+        return
+      }
       #if os(watchOS)
         do {
           for metadata in try await store.pendingTransfers() {
@@ -91,7 +111,10 @@ import LIFTRPersistence
           }
           let imported = try await store.importFile(at: temporary, expectedID: expectedID)
           let id = imported.deletingPathExtension().deletingPathExtension().lastPathComponent
-          WCSession.default.transferUserInfo(["kind": "recordingAcknowledged", "recordingID": id])
+          if WCSession.default.activationState == .activated {
+            WCSession.default.transferUserInfo(["kind": "recordingAcknowledged", "recordingID": id])
+          }
+          // A deactivated session sends no ACK; stable-ID retry imports idempotently later.
           receivedCount += 1
           status = "Recording received"
           onReceive?()

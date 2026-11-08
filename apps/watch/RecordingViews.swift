@@ -26,7 +26,8 @@ struct RecordingHomeView: View {
         }
         .padding(.horizontal, 4)
       }
-      .navigationTitle("LIFTR")
+      .id(controller.phase)
+      .navigationTitle(navigationTitle)
       .navigationBarTitleDisplayMode(.inline)
       .sheet(isPresented: $showingExercises) { exercises }
       .sheet(isPresented: $showingRecordings) { recordings }
@@ -38,7 +39,13 @@ struct RecordingHomeView: View {
       ) {
         Button("OK") { controller.errorMessage = nil }
       } message: {
-        Text(controller.errorMessage ?? "")
+        #if DEBUG && targetEnvironment(simulator)
+          Text(
+            (SimulatorTestSupport.enabled ? "SIMULATED UI TEST. " : "")
+              + (controller.errorMessage ?? ""))
+        #else
+          Text(controller.errorMessage ?? "")
+        #endif
       }
       .confirmationDialog(
         "Keep this unfinished recording for later recovery?", isPresented: $confirmPreserve,
@@ -51,15 +58,15 @@ struct RecordingHomeView: View {
     .tint(.green)
   }
 
+  private var navigationTitle: String {
+    #if DEBUG && targetEnvironment(simulator)
+      if SimulatorTestSupport.enabled { return "SYNTHETIC" }
+    #endif
+    return "LIFTR"
+  }
+
   private var ready: some View {
     VStack(spacing: 12) {
-      if controller.phase == .rest, let date = controller.restStartedAt {
-        HStack {
-          Text("REST").foregroundStyle(.secondary)
-          Spacer()
-          Text(date, style: .timer).monospacedDigit().foregroundStyle(.green)
-        }.font(.caption)
-      }
       Button {
         showingExercises = true
       } label: {
@@ -68,7 +75,7 @@ struct RecordingHomeView: View {
           Text("Change exercise").font(.caption2).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity).padding(.vertical, 8)
       }
-      .buttonStyle(.plain)
+      .buttonStyle(.plain).accessibilityIdentifier("watch.exercise")
       .background(.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
       Button {
         Task { await controller.startSet() }
@@ -78,11 +85,20 @@ struct RecordingHomeView: View {
         )
         .frame(maxWidth: .infinity)
       }
-      .buttonStyle(.borderedProminent)
+      .buttonStyle(.borderedProminent).accessibilityIdentifier("watch.start")
       .foregroundStyle(.black)
       .disabled(controller.continuousCaptureStopped && controller.isContinuousRecording)
+      if controller.phase == .rest, let date = controller.restStartedAt {
+        HStack {
+          Text("REST").foregroundStyle(.secondary)
+          Spacer()
+          Text(date, style: .timer).monospacedDigit().foregroundStyle(.green)
+        }.font(.caption)
+      }
       if !controller.workout.isActive && !controller.isContinuousRecording {
-        Toggle("Record rest too", isOn: $controller.continuousMode).font(.caption)
+        Toggle("Record rest too", isOn: $controller.continuousMode).accessibilityIdentifier(
+          "watch.continuous"
+        ).font(.caption)
         if controller.continuousMode {
           Text(
             "Continuous raw capture includes rest and transitions. Mark each set. Battery use needs device testing."
@@ -103,36 +119,39 @@ struct RecordingHomeView: View {
       Text("Data collection mode").font(.caption2).foregroundStyle(.secondary)
       if controller.workout.isActive || controller.isContinuousRecording {
         Button("End Workout") { Task { await controller.finishWorkout() } }.tint(.gray)
+          .accessibilityIdentifier("watch.endWorkout")
       }
       Button("Recordings · \(controller.recentRecordings.count)") { showingRecordings = true }
+        .accessibilityIdentifier("watch.recordings")
         .font(.caption)
       SyncStatusView(transfer: controller.transfer)
       if controller.pendingDraftCount > 0 {
         Text("\(controller.pendingDraftCount) unfinished recording(s) retained on Watch.")
           .font(.caption2).foregroundStyle(.orange)
         Button("Recover recordings") { Task { await controller.recoverDrafts() } }
+          .accessibilityIdentifier("watch.recover")
           .font(.caption2).disabled(controller.isContinuousRecording)
       }
     }
   }
 
   private var recording: some View {
-    VStack(spacing: 12) {
+    VStack(spacing: 6) {
       HStack(spacing: 6) {
         Circle().fill(.red).frame(width: 7, height: 7)
         Text("RECORDING").font(.caption2).foregroundStyle(.red)
       }
+      Button("End Set") { controller.endSet() }.accessibilityIdentifier("watch.endSet")
+        .buttonStyle(.borderedProminent).tint(.red)
       Text(controller.selectedExercise.name).font(.headline).multilineTextAlignment(.center)
       if let date = controller.recordingStartedAt {
-        Text(date, style: .timer).font(.system(.largeTitle, design: .rounded).monospacedDigit())
+        Text(date, style: .timer).font(.system(.title2, design: .rounded).monospacedDigit())
       }
       Text("\(controller.quality.sampleCount) samples").font(.caption2).foregroundStyle(.secondary)
       if let measured = controller.quality.measuredHz {
         Text("\(measured, specifier: "%.1f") Hz measured").font(.caption2).foregroundStyle(
           .secondary)
       }
-      Button("End Set") { controller.endSet() }
-        .buttonStyle(.borderedProminent).tint(.red)
       Text("Finish the movement, then tap End Set.").font(.caption2).foregroundStyle(.secondary)
     }
   }
@@ -147,14 +166,14 @@ struct RecordingHomeView: View {
           Text(controller.actualReps == 0 ? "Enter reps" : "\(controller.actualReps)").font(.title3)
         }
       }
-      .disabled(controller.labelsLockedForSaveRetry)
+      .disabled(controller.labelsLockedForSaveRetry).accessibilityIdentifier("watch.reps")
       Stepper(value: $controller.weightKG, in: 0...500, step: 0.5) {
         VStack(alignment: .leading) {
           Text("Weight · kg").font(.caption2).foregroundStyle(.secondary)
           Text(controller.weightKG, format: .number.precision(.fractionLength(0...1))).font(.title3)
         }
       }
-      .disabled(controller.labelsLockedForSaveRetry)
+      .disabled(controller.labelsLockedForSaveRetry).accessibilityIdentifier("watch.weight")
       if controller.labelsLockedForSaveRetry {
         Text(
           "Labels are finalized. Retry saving this file, then correct labels on iPhone if needed."
@@ -167,14 +186,19 @@ struct RecordingHomeView: View {
         )
         .font(.caption2).foregroundStyle(.orange)
       }
-      Button("Save Set") { Task { await controller.saveSet() } }
-        .buttonStyle(.borderedProminent).foregroundStyle(.black)
-        .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
+      saveSetButton
       Button(
         controller.isContinuousRecording ? "Leave interval unlabelled" : "Keep unfinished draft"
       ) { confirmPreserve = true }
       .font(.caption2).tint(.gray).disabled(controller.labelsLockedForSaveRetry)
     }
+  }
+
+  private var saveSetButton: some View {
+    Button("Save Set") { Task { await controller.saveSet() } }
+      .accessibilityIdentifier("watch.save")
+      .buttonStyle(.borderedProminent).foregroundStyle(.black)
+      .disabled(controller.actualReps <= 0 || controller.quality.sampleCount < 2)
   }
 
   private var exercises: some View {
@@ -189,7 +213,7 @@ struct RecordingHomeView: View {
             Text(exercise.name)
             Text(exercise.equipment).font(.caption2).foregroundStyle(.secondary)
           }
-        }
+        }.accessibilityIdentifier("exercise." + exercise.id)
       }
       .navigationTitle("Exercise")
     }
@@ -213,6 +237,7 @@ struct RecordingHomeView: View {
               Text("Interrupted").font(.caption2).foregroundStyle(.orange)
             }
             Button("Delete Watch copy", role: .destructive) { recordingToDelete = metadata }
+              .accessibilityIdentifier("watch.delete." + metadata.id.uuidString)
               .font(.caption2)
           }
         }
@@ -230,9 +255,10 @@ struct RecordingHomeView: View {
           Button("Delete Watch copy", role: .destructive) {
             recordingToDelete = nil
             Task { await controller.deleteSavedRecording(id: selected.id) }
-          }
+          }.accessibilityIdentifier("watch.confirmDelete")
         }
-        Button("Keep recording", role: .cancel) { recordingToDelete = nil }
+        Button("Keep recording", role: .cancel) { recordingToDelete = nil }.accessibilityIdentifier(
+          "watch.cancelDelete")
       } message: {
         Text(
           "Unsent motion may be permanently lost. Queued transfers are cancelled where possible. iPhone copies and exports are separate."

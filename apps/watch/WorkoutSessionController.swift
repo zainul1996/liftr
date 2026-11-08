@@ -17,6 +17,17 @@ final class WorkoutSessionController: NSObject, ObservableObject, HKWorkoutSessi
 
   func start() async throws {
     guard !isActive else { return }
+    #if DEBUG && targetEnvironment(simulator)
+      if SimulatorTestSupport.enabled {
+        if ProcessInfo.processInfo.environment["LIFTR_UI_TEST_WORKOUT_FAILURE"] == "1" {
+          throw WorkoutError.denied
+        }
+        startedAt = Date()
+        isActive = true
+        isPaused = false
+        return
+      }
+    #endif
     guard HKHealthStore.isHealthDataAvailable() else { throw WorkoutError.unavailable }
     try await healthStore.requestAuthorization(toShare: [HKObjectType.workoutType()], read: [])
     guard healthStore.authorizationStatus(for: HKObjectType.workoutType()) == .sharingAuthorized
@@ -58,6 +69,13 @@ final class WorkoutSessionController: NSObject, ObservableObject, HKWorkoutSessi
   }
 
   func finish() async throws {
+    #if DEBUG && targetEnvironment(simulator)
+      if SimulatorTestSupport.enabled {
+        isActive = false
+        isPaused = false
+        return
+      }
+    #endif
     guard let session, let builder else { return }
     ending = true
     session.end()

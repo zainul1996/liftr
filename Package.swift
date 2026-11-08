@@ -17,7 +17,7 @@ let package = Package(
     .target(name: "LIFTRCore", path: "packages/LIFTRCore/Sources"),
     .target(
       name: "LIFTRPersistence", dependencies: ["LIFTRCore"],
-      path: "packages/LIFTRPersistence/Sources"),
+      path: "packages/LIFTRPersistence/Sources", linkerSettings: [.linkedLibrary("sqlite3")]),
     .target(
       name: "LIFTRSync", dependencies: ["LIFTRCore", "LIFTRPersistence"],
       path: "packages/LIFTRSync/Sources"),
