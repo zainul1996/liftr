@@ -53,6 +53,11 @@ struct RecordingHomeView: View {
 
   private var ready: some View {
     VStack(spacing: 12) {
+      #if DEBUG && targetEnvironment(simulator)
+        if SimulatorTestSupport.enabled {
+          Text("SYNTHETIC UI TEST DATA").font(.caption2).foregroundStyle(.orange)
+        }
+      #endif
       if controller.phase == .rest, let date = controller.restStartedAt {
         HStack {
           Text("REST").foregroundStyle(.secondary)
@@ -68,7 +73,7 @@ struct RecordingHomeView: View {
           Text("Change exercise").font(.caption2).foregroundStyle(.secondary)
         }.frame(maxWidth: .infinity).padding(.vertical, 8)
       }
-      .buttonStyle(.plain)
+      .buttonStyle(.plain).accessibilityIdentifier("watch.exercise")
       .background(.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 18))
       Button {
         Task { await controller.startSet() }
@@ -78,7 +83,7 @@ struct RecordingHomeView: View {
         )
         .frame(maxWidth: .infinity)
       }
-      .buttonStyle(.borderedProminent)
+      .buttonStyle(.borderedProminent).accessibilityIdentifier("watch.start")
       .foregroundStyle(.black)
       .disabled(controller.continuousCaptureStopped && controller.isContinuousRecording)
       if !controller.workout.isActive && !controller.isContinuousRecording {

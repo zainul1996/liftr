@@ -42,6 +42,9 @@ final class RecordingController: ObservableObject {
 
   init() throws {
     let directory = try RecordingStore.defaultDirectory()
+    #if DEBUG && targetEnvironment(simulator)
+      try SimulatorTestSupport.prepare(directory: directory)
+    #endif
     store = try RecordingStore(directory: directory)
     transfer = RecordingTransfer(store: store)
     draftDirectory = directory.deletingLastPathComponent().appendingPathComponent(

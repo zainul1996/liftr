@@ -25,6 +25,7 @@ targets:
     sources:
       - path: apps/ios
         excludes: [Info.plist, "*.entitlements"]
+      - path: apps/testing
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zainul.liftr
@@ -59,6 +60,7 @@ targets:
     sources:
       - path: apps/watch
         excludes: [Info.plist, "*.entitlements"]
+      - path: apps/testing
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.zainul.liftr.watchkitapp
@@ -89,7 +91,43 @@ targets:
         product: LIFTRSync
       - package: LIFTR
         product: LIFTRMotion
+  LIFTRPhoneUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [tests/ui/iphone]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zainul.liftr.phone-uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: LIFTR
+    dependencies:
+      - target: LIFTR
+  LIFTRWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources: [tests/ui/watch]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zainul.liftr.watch-uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: LIFTRWatch
+    dependencies:
+      - target: LIFTRWatch
 schemes:
+  LIFTRPhoneUITests:
+    build:
+      targets:
+        LIFTR: all
+        LIFTRPhoneUITests: [test]
+    test:
+      targets: [LIFTRPhoneUITests]
+  LIFTRWatchUITests:
+    build:
+      targets:
+        LIFTRWatch: all
+        LIFTRWatchUITests: [test]
+    test:
+      targets: [LIFTRWatchUITests]
   LIFTR:
     build:
       targets:

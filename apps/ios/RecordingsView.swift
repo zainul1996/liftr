@@ -10,7 +10,9 @@ struct ShareFiles: Identifiable {
 struct NativeShareSheet: UIViewControllerRepresentable {
   let urls: [URL]
   func makeUIViewController(context: Context) -> UIActivityViewController {
-    UIActivityViewController(activityItems: urls, applicationActivities: nil)
+    let controller = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+    controller.view.accessibilityIdentifier = "recording.shareSheet"
+    return controller
   }
   func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
@@ -25,6 +27,12 @@ struct RecordingsView: View {
       List {
         Section {
           VStack(alignment: .leading, spacing: 8) {
+            #if DEBUG && targetEnvironment(simulator)
+              if SimulatorTestSupport.enabled {
+                Text("SYNTHETIC UI TEST DATA").font(.caption.bold()).foregroundStyle(.orange)
+                  .accessibilityIdentifier("test.syntheticBadge")
+              }
+            #endif
             Text("LIFT MORE. LOG LESS.").font(.caption.weight(.bold)).tracking(2).foregroundStyle(
               Color.liftrLime)
             Text("Your movement,\nready to review.").font(.largeTitle.weight(.bold))
@@ -74,7 +82,7 @@ struct RecordingsView: View {
                     ).foregroundStyle(.orange)
                   }
                 }.padding(.vertical, 4)
-              }
+              }.accessibilityIdentifier("recording.row.\(original.id.uuidString)")
             }
           }
         }

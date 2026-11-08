@@ -109,7 +109,9 @@ struct RecordingDetailView: View {
         LabeledContent("Equipment", value: metadata.equipment ?? "Not entered")
         LabeledContent("Review", value: metadata.labelReviewStatus.rawValue.capitalized)
         LabeledContent("iPhone review history", value: "\(library.reviewCount(for: original.id))")
-        Button("Review exercise, reps and weight") { showEditor = true }.disabled(
+        Button("Review exercise, reps and weight") { showEditor = true }.accessibilityIdentifier(
+          "recording.review"
+        ).disabled(
           original.mode != .set)
         Text(
           "Review keeps the original recording. Exports include your latest labels and the original metadata with correction history."
@@ -127,7 +129,9 @@ struct RecordingDetailView: View {
       }
       Section {
         Button("Export recording", systemImage: "square.and.arrow.up") { Task { await export() } }
+          .accessibilityIdentifier("recording.export")
         Button("Delete from iPhone", role: .destructive) { showDelete = true }
+          .accessibilityIdentifier("recording.delete")
       }
     }
     .navigationTitle("Recording")
@@ -217,9 +221,11 @@ private struct ReviewRecordingView: View {
         Section("What did you complete?") {
           Picker("Exercise", selection: $exerciseID) {
             ForEach(ExerciseLibrary.all) { Text($0.name).tag($0.id) }
-          }
+          }.pickerStyle(.menu).accessibilityIdentifier("review.exercise")
           TextField("Actual repetitions", text: $reps).keyboardType(.numberPad)
+            .accessibilityIdentifier("review.reps")
           TextField("Weight in kg, optional", text: $weight).keyboardType(.decimalPad)
+            .accessibilityIdentifier("review.weight")
         }
         Section {
           Text(
@@ -240,7 +246,7 @@ private struct ReviewRecordingView: View {
               try save(exerciseID, count, weight.isEmpty ? nil : parsedWeight)
               dismiss()
             } catch { errorMessage = error.localizedDescription }
-          }.disabled(!valid)
+          }.disabled(!valid).accessibilityIdentifier("review.save")
         }
       }
     }.tint(.liftrLime)

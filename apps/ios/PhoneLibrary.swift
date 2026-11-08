@@ -38,6 +38,9 @@ final class PhoneLibrary: ObservableObject {
   init() {
     do {
       let directory = try RecordingStore.defaultDirectory()
+      #if DEBUG && targetEnvironment(simulator)
+        try SimulatorTestSupport.prepare(directory: directory)
+      #endif
       let store = try RecordingStore(directory: directory)
       self.store = store
       let reviewsURL = directory.deletingLastPathComponent().appendingPathComponent("reviews.json")
@@ -126,6 +129,12 @@ final class PhoneLibrary: ObservableObject {
     guard let store else { return }
     do {
       try await store.delete(id: id)
+      let cachedExport = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "LIFTR-Exports", isDirectory: true
+      ).appendingPathComponent(id.uuidString + ".liftr.json")
+      if FileManager.default.fileExists(atPath: cachedExport.path) {
+        try FileManager.default.removeItem(at: cachedExport)
+      }
       var next = reviews
       next.removeValue(forKey: id.uuidString)
       if let reviewsURL {
@@ -133,7 +142,11 @@ final class PhoneLibrary: ObservableObject {
       }
       reviews = next
       await refresh()
-    } catch { errorMessage = "Could not delete recording: \(error.localizedDescription)" }
+    } catch {
+      await refresh()
+      errorMessage =
+        "Local deletion could not complete every cleanup step: \(error.localizedDescription)"
+    }
   }
 
   /// Share original files directly. Only reviewed sets require a separate export copy.
