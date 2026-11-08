@@ -12,18 +12,22 @@ esac
 xcodebuild -version
 mkdir -p .build/ui/results
 if [[ -z "$LIFTR_UI_UDID" ]]; then
+  if [[ "$LIFTR_UI_PLATFORM" == ios ]]; then LIFTR_UI_SDK=iphonesimulator; else LIFTR_UI_SDK=watchsimulator; fi
+  LIFTR_UI_OS_VERSION="$(xcrun --sdk "$LIFTR_UI_SDK" --show-sdk-version)"
   xcrun simctl list devices available -j > .build/ui/available-devices.json
   LIFTR_UI_UDID="$("${LIFTR_PYTHON:-python3.13}" -c '
 import json,sys
 kind=sys.argv[1]
+version="-".join(sys.argv[2].split(".")[:2])
 data=json.load(open(".build/ui/available-devices.json"))
 for runtime,devices in sorted(data["devices"].items(),reverse=True):
-    if "."+kind+"-" not in runtime: continue
+    if not runtime.endswith("."+kind+"-"+version): continue
     for device in devices:
         if device.get("isAvailable") and ((kind=="watchOS" and "Watch" in device["name"]) or (kind=="iOS" and "iPhone" in device["name"])):
+            print("Selected "+runtime+" / "+device["name"],file=sys.stderr)
             print(device["udid"]); sys.exit(0)
 sys.exit("No available matching simulator. Install its runtime in Xcode first.")
-' "$LIFTR_UI_KIND")"
+' "$LIFTR_UI_KIND" "$LIFTR_UI_OS_VERSION")"
 fi
 # The tests reset only their explicit LIFTR-UI-Tests sandbox on this simulator.
 # The existing-archive upgrade method is a separate manual QA case: restore the
