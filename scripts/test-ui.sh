@@ -27,7 +27,7 @@ fi
 # The tests reset only their explicit LIFTR-UI-Tests sandbox on this simulator.
 # The existing-archive upgrade method is a separate manual QA case: restore the
 # prior-version synthetic archive before running that method with -only-testing.
-LIFTR_UI_EXTRA=()
+LIFTR_UI_EXTRA=("-only-testing:$LIFTR_UI_SCHEME")
 if [[ "$LIFTR_UI_PLATFORM" == ios ]]; then
   LIFTR_UI_EXTRA+=('-skip-testing:LIFTRPhoneUITests/LIFTRPhoneUITests/testExistingLegacyReviewMigratesWithoutChangingLabelsOrRaw')
 fi
