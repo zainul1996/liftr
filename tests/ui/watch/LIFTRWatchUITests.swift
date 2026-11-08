@@ -198,12 +198,14 @@ final class LIFTRWatchUITests: XCTestCase {
     let delete = app.buttons["watch.delete.88888888-8888-4888-8888-888888888888"]
     reveal(delete, app: app)
     delete.tap()
-    XCTAssertTrue(
-      app.buttons["watch.cancelDelete"].waitForExistence(timeout: 5), app.debugDescription)
-    app.buttons["watch.cancelDelete"].tap()
+    let cancel = app.buttons["AX_ActionContentControllerCancelButton"]
+    XCTAssertTrue(cancel.waitForExistence(timeout: 5), app.debugDescription)
+    cancel.tap()
     XCTAssertTrue(delete.exists)
     delete.tap()
-    app.buttons["watch.confirmDelete"].firstMatch.tap()
+    let confirm = app.tables.buttons["Delete Watch copy"].firstMatch
+    reveal(confirm, app: app)
+    confirm.tap()
     XCTAssertTrue(
       app.staticTexts["Your saved sets will appear here."].waitForExistence(timeout: 5),
       app.debugDescription)
