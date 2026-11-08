@@ -198,7 +198,7 @@ final class LIFTRWatchUITests: XCTestCase {
     let delete = app.buttons["watch.delete.88888888-8888-4888-8888-888888888888"]
     reveal(delete, app: app)
     delete.tap()
-    let cancel = app.buttons["AX_ActionContentControllerCancelButton"]
+    let cancel = app.buttons["AX_ActionContentControllerCancelButton"].firstMatch
     XCTAssertTrue(cancel.waitForExistence(timeout: 5), app.debugDescription)
     cancel.tap()
     XCTAssertTrue(delete.exists)
