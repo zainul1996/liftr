@@ -12,6 +12,8 @@ final class LIFTRWatchUITests: XCTestCase {
     app.launch()
     XCTAssertTrue(app.buttons["watch.start"].waitForExistence(timeout: 10), app.debugDescription)
     XCTAssertTrue(app.buttons["watch.start"].isHittable, "Start Workout must be visible")
+    XCTAssertTrue(
+      app.frame.contains(app.buttons["watch.start"].frame), "Start must fit the viewport")
     return app
   }
   private func capture(_ title: String, app: XCUIApplication) {
@@ -47,6 +49,8 @@ final class LIFTRWatchUITests: XCTestCase {
     capture("Synthetic motion recording", app: app)
     XCTAssertTrue(
       app.buttons["watch.endSet"].isHittable, "End Set must be visible without scrolling")
+    XCTAssertTrue(
+      app.frame.contains(app.buttons["watch.endSet"].frame), "End Set must fit the viewport")
     app.buttons["watch.endSet"].tap()
     XCTAssertTrue(app.staticTexts["Save set"].waitForExistence(timeout: 5))
     capture("Synthetic rep and weight entry", app: app)
@@ -62,6 +66,8 @@ final class LIFTRWatchUITests: XCTestCase {
     XCTAssertTrue(save.isEnabled)
     save.tap()
     XCTAssertTrue(app.buttons["watch.start"].waitForExistence(timeout: 5), app.debugDescription)
+    XCTAssertTrue(
+      app.frame.contains(app.buttons["watch.start"].frame), "Rest should reopen at the top")
     capture("Saved synthetic set and rest", app: app)
     XCTAssertTrue(app.staticTexts["Machine Chest Press"].exists)
     reveal(app.buttons["watch.recordings"], app: app)
@@ -130,6 +136,8 @@ final class LIFTRWatchUITests: XCTestCase {
     XCTAssertTrue(app.buttons["watch.endSet"].waitForExistence(timeout: 5))
     // The live synthetic timer supplies samples while the runner resolves the view.
     capture("Synthetic set active", app: app)
+    XCTAssertTrue(
+      app.frame.contains(app.buttons["watch.endSet"].frame), "End Set must fit the viewport")
     app.buttons["watch.endSet"].tap()
     XCTAssertTrue(app.staticTexts["watch.reps"].waitForExistence(timeout: 5))
     app.staticTexts["watch.reps"].buttons["Add"].tap()

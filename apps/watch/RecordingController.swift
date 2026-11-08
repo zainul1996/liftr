@@ -9,7 +9,7 @@ import WatchKit
 
 @MainActor
 final class RecordingController: ObservableObject {
-  enum Phase { case ready, preparing, recording, review, saving, rest }
+  enum Phase: Hashable { case ready, preparing, recording, review, saving, rest }
   @Published private(set) var phase: Phase = .ready
   @Published var selectedExercise = ExerciseLibrary.all[0]
   @Published var actualReps = 0

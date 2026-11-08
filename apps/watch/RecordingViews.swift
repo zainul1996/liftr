@@ -13,15 +13,6 @@ struct RecordingHomeView: View {
     NavigationStack {
       ScrollView {
         VStack(spacing: 12) {
-          #if DEBUG && targetEnvironment(simulator)
-            if SimulatorTestSupport.enabled
-              && (controller.phase == .recording || controller.phase == .review)
-            {
-              Text("SYNTHETIC UI TEST DATA").font(.system(size: 9)).lineLimit(1).minimumScaleFactor(
-                0.7
-              ).foregroundStyle(.orange)
-            }
-          #endif
           switch controller.phase {
           case .preparing, .saving:
             ProgressView(controller.phase == .saving ? "Saving set" : "Preparing workout")
@@ -35,7 +26,8 @@ struct RecordingHomeView: View {
         }
         .padding(.horizontal, 4)
       }
-      .navigationTitle("LIFTR")
+      .id(controller.phase)
+      .navigationTitle(navigationTitle)
       .navigationBarTitleDisplayMode(.inline)
       .sheet(isPresented: $showingExercises) { exercises }
       .sheet(isPresented: $showingRecordings) { recordings }
@@ -66,14 +58,15 @@ struct RecordingHomeView: View {
     .tint(.green)
   }
 
+  private var navigationTitle: String {
+    #if DEBUG && targetEnvironment(simulator)
+      if SimulatorTestSupport.enabled { return "SYNTHETIC" }
+    #endif
+    return "LIFTR"
+  }
+
   private var ready: some View {
     VStack(spacing: 12) {
-      #if DEBUG && targetEnvironment(simulator)
-        if SimulatorTestSupport.enabled {
-          Text("SYNTHETIC UI TEST DATA").font(.system(size: 9)).lineLimit(1).minimumScaleFactor(0.7)
-            .foregroundStyle(.orange)
-        }
-      #endif
       if controller.phase == .rest, let date = controller.restStartedAt {
         HStack {
           Text("REST").foregroundStyle(.secondary)
@@ -148,12 +141,12 @@ struct RecordingHomeView: View {
         Circle().fill(.red).frame(width: 7, height: 7)
         Text("RECORDING").font(.caption2).foregroundStyle(.red)
       }
+      Button("End Set") { controller.endSet() }.accessibilityIdentifier("watch.endSet")
+        .buttonStyle(.borderedProminent).tint(.red)
       Text(controller.selectedExercise.name).font(.headline).multilineTextAlignment(.center)
       if let date = controller.recordingStartedAt {
         Text(date, style: .timer).font(.system(.title2, design: .rounded).monospacedDigit())
       }
-      Button("End Set") { controller.endSet() }.accessibilityIdentifier("watch.endSet")
-        .buttonStyle(.borderedProminent).tint(.red)
       Text("\(controller.quality.sampleCount) samples").font(.caption2).foregroundStyle(.secondary)
       if let measured = controller.quality.measuredHz {
         Text("\(measured, specifier: "%.1f") Hz measured").font(.caption2).foregroundStyle(
