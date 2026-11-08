@@ -38,7 +38,18 @@ fi
 # Match the explicit prebooted-device setup used by local native UI QA.
 "${LIFTR_PYTHON:-python3.13}" - "$LIFTR_UI_UDID" <<'PYBOOT'
 import subprocess,sys
-subprocess.run(["xcrun","simctl","bootstatus",sys.argv[1],"-b"],check=True,timeout=30)
+process=subprocess.Popen(["xcrun","simctl","bootstatus",sys.argv[1],"-b"])
+for elapsed in (30,60,90):
+    try:
+        result=process.wait(timeout=30)
+        if result: raise SystemExit(result)
+        break
+    except subprocess.TimeoutExpired:
+        print("Simulator readiness still pending after "+str(elapsed)+"s of a 90s budget",flush=True)
+else:
+    process.kill()
+    process.wait(timeout=10)
+    raise SystemExit("Simulator did not finish booting within 90s; native tests were not started")
 PYBOOT
 # The tests reset only their explicit LIFTR-UI-Tests sandbox on this simulator.
 # The existing-archive upgrade method is a separate manual QA case: restore the
