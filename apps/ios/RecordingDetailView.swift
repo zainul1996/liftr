@@ -88,7 +88,9 @@ struct RecordingDetailView: View {
           }
         }
         Section("Recording quality") {
-          LabeledContent("Samples", value: "\(recording.samples.count)")
+          LabeledContent("Samples", value: "\(recording.samples.count)").accessibilityIdentifier(
+            "quality.samples"
+          ).accessibilityValue("\(recording.samples.count)")
           LabeledContent(
             "Target rate", value: "\(original.sensorConfiguration.targetHz.formatted()) Hz")
           if let observedHz {
@@ -96,7 +98,9 @@ struct RecordingDetailView: View {
               "Observed rate",
               value: "\(observedHz.formatted(.number.precision(.fractionLength(1)))) Hz")
           }
-          LabeledContent("Gaps above 2.5 intervals", value: "\(gaps)")
+          LabeledContent("Gaps above 2.5 intervals", value: "\(gaps)").accessibilityIdentifier(
+            "quality.gaps"
+          ).accessibilityValue("\(gaps)")
           LabeledContent("Set annotations", value: "\(recording.annotations.count)")
           LabeledContent("Capture status", value: original.status.rawValue.capitalized)
           Text(
@@ -152,7 +156,8 @@ struct RecordingDetailView: View {
           await library.deleteFromPhone(original.id)
           if library.errorMessage == nil { dismiss() }
         }
-      }
+      }.accessibilityIdentifier("recording.confirmDelete")
+      Button("Cancel", role: .cancel) {}.accessibilityIdentifier("recording.cancelDelete")
     } message: {
       Text(
         "This also removes its iPhone review history. Watch recordings, exported files and backups are separate copies. A later Watch retry may send it again."

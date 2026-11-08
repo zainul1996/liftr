@@ -29,6 +29,12 @@ final class LIFTRPhoneUITests: XCTestCase {
     }
     XCTAssertTrue(element.isHittable, app.debugDescription)
   }
+  private func capture(_ name: String, app: XCUIApplication) {
+    let attachment = XCTAttachment(screenshot: app.screenshot())
+    attachment.name = name
+    attachment.lifetime = .keepAlways
+    add(attachment)
+  }
   private func replace(_ field: XCUIElement, with text: String) {
     field.tap()
     let existing = field.value as? String ?? ""
@@ -38,6 +44,11 @@ final class LIFTRPhoneUITests: XCTestCase {
   func testReviewPersistsAndExportsActualReviewedFile() {
     var app = launch()
     openFixture(app)
+    capture("Synthetic recording detail", app: app)
+    let samples = app.descendants(matching: .any).matching(identifier: "quality.samples").firstMatch
+    reveal(samples, app: app)
+    XCTAssertEqual(samples.value as? String, "101")
+    capture("Synthetic recording quality", app: app)
     let review = app.buttons["recording.review"]
     reveal(review, app: app)
     review.tap()
@@ -46,6 +57,7 @@ final class LIFTRPhoneUITests: XCTestCase {
     replace(app.textFields["review.reps"], with: "12")
     replace(app.textFields["review.weight"], with: "17.5")
     app.buttons["review.save"].tap()
+    capture("Saved synthetic review", app: app)
     app.terminate()
     app = launch(reset: false)
     openFixture(app)
@@ -68,7 +80,7 @@ final class LIFTRPhoneUITests: XCTestCase {
     app.buttons["Cancel"].tap()
     XCTAssertTrue(app.buttons["recording.delete"].exists)
     delete.tap()
-    app.buttons["Delete from iPhone"].lastMatch.tap()
+    app.buttons["recording.confirmDelete"].tap()
     XCTAssertTrue(
       app.staticTexts["Ready for your first set"].waitForExistence(timeout: 5), app.debugDescription
     )
