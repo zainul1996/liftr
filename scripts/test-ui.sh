@@ -9,6 +9,7 @@ case "$LIFTR_UI_PLATFORM" in
   watch) LIFTR_UI_SCHEME=LIFTRWatchUITests; LIFTR_UI_DEST='watchOS Simulator'; LIFTR_UI_KIND=watchOS ;;
   *) echo 'Usage: scripts/test-ui.sh ios|watch [dedicated-simulator-UUID]' >&2; exit 2 ;;
 esac
+xcodebuild -version
 mkdir -p .build/ui/results
 if [[ -z "$LIFTR_UI_UDID" ]]; then
   xcrun simctl list devices available -j > .build/ui/available-devices.json
