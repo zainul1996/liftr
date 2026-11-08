@@ -22,7 +22,8 @@ version="-".join(sys.argv[2].split(".")[:2])
 data=json.load(open(".build/ui/available-devices.json"))
 for runtime,devices in sorted(data["devices"].items(),reverse=True):
     if not runtime.endswith("."+kind+"-"+version): continue
-    for device in devices:
+    preferred="Apple Watch Series 11 (46mm)" if kind=="watchOS" else "iPhone 17 Pro"
+    for device in sorted(devices,key=lambda d:d["name"]!=preferred):
         if device.get("isAvailable") and ((kind=="watchOS" and "Watch" in device["name"]) or (kind=="iOS" and "iPhone" in device["name"])):
             print("Selected "+runtime+" / "+device["name"],file=sys.stderr)
             print(device["udid"]); sys.exit(0)
